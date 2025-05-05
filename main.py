@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 
-import json
+from PIL import Image, ImageTk
 
 from home import Home
 from weeks_log import WeeksLog
@@ -76,6 +76,10 @@ class Main(tk.Tk):
     super().__init__()
     self.minsize(1000, 500)
     self.title("Study tracker")
+
+    ico = Image.open('assets/logo_transparent_resized.png')
+    photo = ImageTk.PhotoImage(ico)
+    self.wm_iconphoto(False, photo)
 
   def run(self):
     for widget in self.winfo_children():
