@@ -4,20 +4,10 @@ import csv
 from datetime import datetime, date
 from tkinter import messagebox
 import json
+from utils import resource_path
 
-import sys
-import os
-
-def resource_path(relative_path):
-    try:
-        base_path = sys._MEIPASS
-    except AttributeError:
-        base_path = os.path.abspath(".")
-    return os.path.join(base_path, relative_path)
-
-PATH_DATA_CURRENT_WEEK_LOG = resource_path("data_current_week.csv")
+PATH_DATA_CURRENT_WEEK_CSV = resource_path("data_current_week.csv")
 PATH_DATA_WEEKS_LOG_CSV = resource_path("data_weeks_log.csv")
-PATH_DATA_JSON = resource_path("data.json")
 
 class TimerWindow(tk.Toplevel):
   def __init__(self, master, root):
