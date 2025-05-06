@@ -4,9 +4,10 @@ import csv
 from datetime import datetime, date
 from tkinter import messagebox
 import json
+from utils import resource_path
 
-PATH_DATA_CURRENT_WEEK_CSV = "data_current_week.csv"
-PATH_DATA_WEEKS_LOG_CSV = "data_weeks_log.csv"
+PATH_DATA_CURRENT_WEEK_CSV = resource_path("data_current_week.csv")
+PATH_DATA_WEEKS_LOG_CSV = resource_path("data_weeks_log.csv")
 
 class TimerWindow(tk.Toplevel):
   def __init__(self, master, root):

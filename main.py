@@ -1,12 +1,13 @@
 import tkinter as tk
 from tkinter import ttk
-from tkinter import messagebox
 
-from PIL import Image, ImageTk
 import json
 
 from home import Home
 from weeks_log import WeeksLog
+from utils import convert_image_to_icon
+
+import webbrowser
 
 class Settings(tk.Toplevel):
   def __init__(self, root):
@@ -47,30 +48,43 @@ class Settings(tk.Toplevel):
     self.run_sidepanel_frame()
     self.clear_content_frame()
 
+    tk.Label(self.content_frame, text="Appearance", font=("Arial 18 bold")).pack(padx=15, pady=15, anchor="nw")
+    ttk.Separator(self.content_frame, orient="horizontal").pack(fill="x")
+
     tk.Label(self.content_frame, text="Working on it...").pack(padx=15, pady=15)
 
   def run_preferences_frame(self):
     self.run_sidepanel_frame()
     self.clear_content_frame()
 
-    with open('settings.json', "r") as file:
+    with open('data.json', "r") as file:
       settings_data = json.load(file)
 
     tk.Label(self.content_frame, text="Preferences", font=("Arial 18 bold")).pack(padx=15, pady=15, anchor="nw")
     ttk.Separator(self.content_frame, orient="horizontal").pack(fill="x")
 
-    for setting_name, value in settings_data["preferences"].items():
-      frame_setting = tk.Frame(self.content_frame)
-      frame_setting.pack(side="top", fill="x", pady=10, padx=15, ipady=5)
-
-      tk.Label(frame_setting, text=setting_name.capitalize()).pack(side="left", padx=10)
+    tk.Label(self.content_frame, text="Working on it...").pack(padx=15, pady=15)
 
   def run_donation_frame(self):
     self.run_sidepanel_frame()
     self.clear_content_frame()
 
-    tk.Label(self.content_frame, text="hola").pack(padx=15, pady=15)
+    frame_title = tk.Frame(self.content_frame)
+    frame_title.pack(padx=15, pady=15, anchor="nw")
+    tk.Label(frame_title, text="Little help from you!", font=("Arial 18 bold")).pack(anchor="nw")
 
+    ttk.Separator(self.content_frame, orient="horizontal").pack(fill="x")
+
+    frame_texts = tk.Frame(self.content_frame)
+    frame_texts.pack(padx=15, pady=15, anchor="nw")
+
+    tk.Label(frame_texts, text="💛 Made with love (and a lot of late-night coding)!", font=("Arial 10 bold")).pack(anchor="nw")
+    tk.Label(frame_texts, text=f"If this little tracker helps make your days easier, i'd be thrilled if you sent a coffe my way\nNo pressure -- One coffe = one happy coder☕", justify="left").pack(anchor="nw")
+    link = tk.Label(frame_texts, text="👉 buymeacoffee.com/matteopet", fg="blue", cursor="hand2")
+    link.pack(anchor="nw")
+    link.bind("<Button-1>", lambda e: webbrowser.open_new("https://buymeacoffee.com/matteopet"))
+
+    tk.Label(frame_texts, text="Thank you!").pack(anchor="center", pady=15)
 
 class Main(tk.Tk):
   def __init__(self):
@@ -78,9 +92,8 @@ class Main(tk.Tk):
     self.minsize(1000, 500)
     self.title("Study tracker")
 
-    ico = Image.open('assets/logo_transparent_resized.png')
-    photo = ImageTk.PhotoImage(ico)
-    self.wm_iconphoto(False, photo)
+    icon = convert_image_to_icon("assets/logo_transparent_resized.png")
+    self.wm_iconphoto(False, icon)
 
   def run(self):
     for widget in self.winfo_children():
