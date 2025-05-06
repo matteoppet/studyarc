@@ -2,3 +2,8 @@
 /data_current_week.csv
 /data_weeks_log.csv
 /env
+/build.bat
+/dist
+/build
+/main.spec
+/__pycache__
