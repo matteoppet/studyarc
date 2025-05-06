@@ -8,6 +8,7 @@ from utils import resource_path
 
 PATH_DATA_CURRENT_WEEK_CSV = resource_path("data_current_week.csv")
 PATH_DATA_WEEKS_LOG_CSV = resource_path("data_weeks_log.csv")
+PATH_DATA_JSON = resource_path("data.json")
 
 class TimerWindow(tk.Toplevel):
   def __init__(self, master, root):
@@ -118,7 +119,7 @@ class TimerWindow(tk.Toplevel):
       self.clear_last_week()
 
     already_inside = False
-    with open(PATH_DATA_CURRENT_WEEK_LOG, "r") as temp_data:
+    with open(PATH_DATA_CURRENT_WEEK_CSV, "r") as temp_data:
       reader = csv.DictReader(temp_data)
 
       for row in reader:
@@ -126,7 +127,7 @@ class TimerWindow(tk.Toplevel):
           already_inside = row
           break
 
-    with open(PATH_DATA_CURRENT_WEEK_LOG, "r") as f:
+    with open(PATH_DATA_CURRENT_WEEK_CSV, "r") as f:
         reader = csv.reader(f)
         data = list(reader)
 
@@ -152,7 +153,7 @@ class TimerWindow(tk.Toplevel):
       row_to_write = [current_day, time_studied, description]
       data.insert(1, row_to_write)
 
-    with open(PATH_DATA_CURRENT_WEEK_LOG, "w", newline="") as f:
+    with open(PATH_DATA_CURRENT_WEEK_CSV, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerows(data)
 
@@ -356,7 +357,7 @@ class Home(tk.Frame):
   def load_data(self):
     self.data.clear()
 
-    with open(PATH_DATA_CURRENT_WEEK_LOG, newline="") as tempdata:
+    with open(PATH_DATA_CURRENT_WEEK_CSV, newline="") as tempdata:
       reader = csv.DictReader(tempdata)
 
       self.headers_name = reader.fieldnames
