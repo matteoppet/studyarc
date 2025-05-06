@@ -4,7 +4,18 @@ import csv
 from datetime import datetime
 import ast
 
-PATH_DATA_WEEKS_LOG_CSV = "data_weeks_log.csv"
+import sys
+import os
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except AttributeError:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
+PATH_DATA_WEEKS_LOG_CSV = resource_path("data_weeks_log.csv")
+PATH_DATA_JSON = resource_path("data.json")
 
 class OpenWeek(tk.Toplevel):
   def __init__(self, root, info_week):
