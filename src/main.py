@@ -1,13 +1,41 @@
 import tkinter as tk
 from tkinter import ttk
 
-import json
-
 from home import Home
 from weeks_log import WeeksLog
 from utils import convert_image_to_icon
 
 import webbrowser
+import json
+from pathlib import Path
+import csv
+
+### CREATION FILES NEEDED
+
+base_dir = Path("C:/study_tracker")
+csv_files = {
+  "data_current_week.csv": [["Day", "Time", "Description"]],
+  "data_weeks_log.csv": [["Week number","Total Time","Summary"]],
+  "data.json": {"last_day": ""}
+}
+
+if not base_dir.exists():
+  base_dir.mkdir(parents=True)
+
+  for filename, headers in csv_files.items():
+    file_path = base_dir / filename
+
+    if filename.endswith(".csv"):
+      with open(file_path, "w", newline="") as f:
+        csv.writer(f).writerows(headers)
+
+    elif filename.endswith(".json"):
+      json_object = json.dumps(headers, indent=2)
+
+      with open(file_path, "w") as f:
+        f.write(json_object)
+
+###
 
 class Settings(tk.Toplevel):
   def __init__(self, root):
@@ -92,7 +120,7 @@ class Main(tk.Tk):
     self.minsize(1000, 500)
     self.title("Study tracker")
 
-    icon = convert_image_to_icon("assets/logo_transparent_resized.png")
+    icon = convert_image_to_icon("../assets/logo_transparent_resized.png")
     self.wm_iconphoto(False, icon)
 
   def run(self):

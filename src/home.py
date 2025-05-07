@@ -6,9 +6,9 @@ from tkinter import messagebox
 import json
 from utils import resource_path
 
-PATH_DATA_CURRENT_WEEK_CSV = resource_path("data_current_week.csv")
-PATH_DATA_WEEKS_LOG_CSV = resource_path("data_weeks_log.csv")
-PATH_DATA_JSON = resource_path("data.json")
+PATH_DATA_CURRENT_WEEK_CSV = resource_path("C:/study_tracker/data_current_week.csv")
+PATH_DATA_WEEKS_LOG_CSV = resource_path("C:/study_tracker/data_weeks_log.csv")
+PATH_DATA_JSON = resource_path("C:/study_tracker/data.json")
 
 class TimerWindow(tk.Toplevel):
   def __init__(self, master, root):

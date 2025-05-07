@@ -4,18 +4,10 @@ import csv
 from datetime import datetime
 import ast
 
-import sys
-import os
+from utils import resource_path
 
-def resource_path(relative_path):
-    try:
-        base_path = sys._MEIPASS
-    except AttributeError:
-        base_path = os.path.abspath(".")
-    return os.path.join(base_path, relative_path)
-
-PATH_DATA_WEEKS_LOG_CSV = resource_path("data_weeks_log.csv")
-PATH_DATA_JSON = resource_path("data.json")
+PATH_DATA_WEEKS_LOG_CSV = resource_path("C:/study_tracker/data_weeks_log.csv")
+PATH_DATA_JSON = resource_path("C:/study_tracker/data.json")
 
 class OpenWeek(tk.Toplevel):
   def __init__(self, root, info_week):
@@ -134,5 +126,3 @@ class WeeksLog(tk.Frame):
 
   def open_week_summary(self, info_week):
     OpenWeek(self, info_week)
-
-# TODO: create settings where you can put your starting day etc, and you can set your goal daily, and on the table if you got the goal, it will turn green the row
