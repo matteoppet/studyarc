@@ -3,7 +3,7 @@ from tkinter import ttk
 
 from home import Home
 from weeks_log import WeeksLog
-from utils import convert_image_to_icon
+from utils import resource_path
 
 import webbrowser
 import json
@@ -120,8 +120,8 @@ class Main(tk.Tk):
     self.minsize(1000, 500)
     self.title("Study tracker")
 
-    icon = convert_image_to_icon("../assets/logo_transparent_resized.png")
-    self.wm_iconphoto(False, icon)
+    icon = resource_path("assets/logo_transparent_resized.ico")
+    self.iconbitmap(icon)
 
   def run(self):
     for widget in self.winfo_children():
