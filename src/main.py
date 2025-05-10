@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from tkinter import messagebox
 
 from home import Home
 from weeks_log import WeeksLog
@@ -16,7 +17,10 @@ base_dir = Path("C:/study_tracker")
 csv_files = {
   "data_current_week.csv": [["Day", "Time", "Description"]],
   "data_weeks_log.csv": [["Week number","Total Time","Summary"]],
-  "data.json": {"last_day": ""}
+  "user_config.json": {
+    "last_day": "",
+    "session_goal": [0, 30],
+  }
 }
 
 if not base_dir.exists():
@@ -34,6 +38,23 @@ if not base_dir.exists():
 
       with open(file_path, "w") as f:
         f.write(json_object)
+else:
+  for path, headers in csv_files.items():
+    file_path = base_dir / path
+    path_to_check = Path(file_path)
+
+    if not path_to_check.exists():
+      if path.endswith(".csv"):
+        with open(file_path, "w", newline="") as f:
+          csv.writer(f).writerows(headers)
+
+      elif path.endswith(".json"):
+        json_object = json.dumps(headers, indent=2)
+
+        with open(file_path, "w") as f:
+          f.write(json_object)
+
+PATH_USER_CONFIG_JSON = base_dir / "user_config.json"
 
 ###
 
@@ -82,16 +103,56 @@ class Settings(tk.Toplevel):
     tk.Label(self.content_frame, text="Working on it...").pack(padx=15, pady=15)
 
   def run_preferences_frame(self):
+    def apply():
+      goal_time_list = [abs(int(session_goal_time_string_hours.get())), abs(int(session_goal_time_string_minutes.get()))]
+
+      if goal_time_list[1] > 60:
+        messagebox.showerror("Invalid session goal time", "Session goal time minutes must be below or equal to 60")
+      else:
+        with open(PATH_USER_CONFIG_JSON) as f:
+          data_json = json.load(f)
+        
+        data_json["session_goal"] = [int(session_goal_time_string_hours.get()), int(session_goal_time_string_minutes.get())]
+        json_object = json.dumps(data_json, indent=2)
+
+        with open(PATH_USER_CONFIG_JSON, "w") as outfile:
+          outfile.write(json_object)
+
     self.run_sidepanel_frame()
     self.clear_content_frame()
 
-    with open('data.json', "r") as file:
+    with open(PATH_USER_CONFIG_JSON, "r") as file:
       settings_data = json.load(file)
 
-    tk.Label(self.content_frame, text="Preferences", font=("Arial 18 bold")).pack(padx=15, pady=15, anchor="nw")
+    frame_title = tk.Frame(self.content_frame)
+    frame_title.pack(padx=15, pady=15, anchor="nw")
+    tk.Label(frame_title, text="Preferences", font=("Arial 18 bold")).pack(anchor="nw")
+
     ttk.Separator(self.content_frame, orient="horizontal").pack(fill="x")
 
-    tk.Label(self.content_frame, text="Working on it...").pack(padx=15, pady=15)
+    ######################################
+
+    frame_texts = tk.Frame(self.content_frame)
+    frame_texts.pack(padx=15, pady=15, anchor="nw", fill="both")
+
+    frame_session_goal_time = tk.Frame(frame_texts)
+    frame_session_goal_time.pack(padx=5, pady=5, anchor="nw", fill="x")
+    with open(PATH_USER_CONFIG_JSON) as f: temp_data = json.load(f)
+    session_goal_time_string_hours = tk.StringVar()
+    session_goal_time_string_hours.set(temp_data["session_goal"][0])
+    session_goal_time_string_minutes = tk.StringVar()
+    session_goal_time_string_minutes.set(temp_data["session_goal"][1])
+    tk.Label(frame_session_goal_time, text="Session goal time").pack(side="left")
+    # MINUTES
+    tk.Label(frame_session_goal_time, text="Minutes").pack(side="right")
+    tk.Entry(frame_session_goal_time, width=3, textvariable=session_goal_time_string_minutes).pack(side="right", padx=2)
+    # HOURS
+    tk.Label(frame_session_goal_time, text="Hours").pack(side="right", padx=2)
+    tk.Entry(frame_session_goal_time, width=3, textvariable=session_goal_time_string_hours).pack(side="right")
+
+    frame_button_apply = tk.Frame(self.content_frame)
+    frame_button_apply.pack(padx=15, pady=15, side="bottom", fill="both")
+    tk.Button(frame_button_apply, text="Apply", width=10, command=lambda: apply()).pack(side="right")
 
   def run_donation_frame(self):
     self.run_sidepanel_frame()
@@ -120,7 +181,7 @@ class Main(tk.Tk):
     self.minsize(1000, 500)
     self.title("Study tracker")
 
-    icon = resource_path("assets/logo_transparent_resized.ico")
+    icon = resource_path("../assets/logo_transparent_resized.ico")
     self.iconbitmap(icon)
 
   def run(self):

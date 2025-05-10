@@ -8,7 +8,7 @@ from utils import resource_path
 
 PATH_DATA_CURRENT_WEEK_CSV = resource_path("C:/study_tracker/data_current_week.csv")
 PATH_DATA_WEEKS_LOG_CSV = resource_path("C:/study_tracker/data_weeks_log.csv")
-PATH_DATA_JSON = resource_path("C:/study_tracker/data.json")
+PATH_USER_CONFIG_JSON = resource_path("C:/study_tracker/user_config.json")
 
 class TimerWindow(tk.Toplevel):
   def __init__(self, master, root):
@@ -158,7 +158,7 @@ class TimerWindow(tk.Toplevel):
         writer.writerows(data)
 
   def check_new_week(self):
-    with open(PATH_DATA_JSON, "r") as file:
+    with open(PATH_USER_CONFIG_JSON, "r") as file:
       data = json.load(file)
 
     last_day_recorded = data["last_day"]
@@ -166,14 +166,16 @@ class TimerWindow(tk.Toplevel):
     today = date.today()
     today_string = f"{today.year} {today.month} {today.day}"
 
-    if last_day_recorded == "":
-      dict_to_write = {
-        "last_day": today_string
-      }
-      json_object = json.dumps(dict_to_write, indent=2)
+    with open(PATH_USER_CONFIG_JSON) as f:
+      data_json = json.load(f)
 
-      with open(PATH_DATA_JSON, "w") as outfile:
+    if last_day_recorded == "":  
+      data_json["last_day"] = today_string
+      json_object = json.dumps(data_json, indent=2)
+
+      with open(PATH_USER_CONFIG_JSON, "w") as outfile:
         outfile.write(json_object)
+
       return False
 
     else:
@@ -185,12 +187,10 @@ class TimerWindow(tk.Toplevel):
       week1 = date1.isocalendar()[:2]
       week2 = date2.isocalendar()[:2]
 
-      dict_to_write = {
-        "last_day": today_string
-      }
-      json_object = json.dumps(dict_to_write, indent=2)
+      data_json["last_day"] = today_string
+      json_object = json.dumps(data_json, indent=2)
 
-      with open(PATH_DATA_JSON, "w") as outfile:
+      with open(PATH_USER_CONFIG_JSON, "w") as outfile:
         outfile.write(json_object)
 
       return week1 != week2
@@ -340,19 +340,31 @@ class Home(tk.Frame):
     # DRAW TABLE
     header_row = tk.Frame(self, width=20)
     header_row.pack(fill="x", expand=True)
-
+    
+    with open(PATH_USER_CONFIG_JSON) as f: temp_data = json.load(f)
     for header_name in self.headers_name:
       tk.Label(header_row, text=header_name.capitalize(), borderwidth=1, relief="solid", width=20, bg="lightgray").pack(side="left", expand=True, fill="x", ipady=4)
 
     for row_data in self.data:
+      row_data_time_formatted_h = int(row_data["Time"].split(" ")[0].replace("h", ""))
+      row_data_time_formatted_m = int(row_data["Time"].split(" ")[1].replace("m", ""))
+      temp_data_time_h = temp_data["session_goal"][0]
+      temp_data_time_m = temp_data["session_goal"][1]
+
       current_row = tk.Frame(self, borderwidth=1, relief="solid", width=20)
       current_row.pack(fill="x", expand=True)
       
       for key, value in row_data.items():
         if key == "Time":
-          tk.Label(current_row, text=str(value).capitalize(), width=20, anchor="center").pack(side="left", fill="x", ipady=2)
+          if row_data_time_formatted_h >= temp_data_time_h and row_data_time_formatted_m >= temp_data_time_m:
+            tk.Label(current_row, text=str(value).capitalize(), width=20, anchor="center", bg="light green").pack(side="left", fill="x", ipady=2)
+          else:
+            tk.Label(current_row, text=str(value).capitalize(), width=20, anchor="center").pack(side="left", fill="x", ipady=2)
         else:
-          tk.Label(current_row, text=str(value).capitalize(), width=20, anchor="w", wraplength=150, justify="left").pack(side="left", fill="x", ipady=2)
+          if row_data_time_formatted_h >= temp_data_time_h and row_data_time_formatted_m >= temp_data_time_m:
+            tk.Label(current_row, text=str(value).capitalize(), width=20, anchor="w", wraplength=150, justify="left", bg="light green").pack(side="left", fill="x", ipady=2)
+          else:
+            tk.Label(current_row, text=str(value).capitalize(), width=20, anchor="w", wraplength=150, justify="left").pack(side="left", fill="x", ipady=2)
 
   def load_data(self):
     self.data.clear()
