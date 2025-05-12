@@ -1,13 +1,9 @@
 import tkinter as tk
 from tkinter import ttk
 import csv
-from datetime import datetime
 import ast
 
-from utils import resource_path
-
-PATH_DATA_WEEKS_LOG_CSV = resource_path("C:/study_tracker/data_weeks_log.csv")
-PATH_DATA_JSON = resource_path("C:/study_tracker/data.json")
+from paths import DATA_WEEKS_LOG
 
 class OpenWeek(tk.Toplevel):
   def __init__(self, root, info_week):
@@ -31,7 +27,7 @@ class OpenWeek(tk.Toplevel):
     frame_days.pack(side="top", padx=10)
 
     fieldnames = []
-    with open(PATH_DATA_WEEKS_LOG_CSV, "r") as f:
+    with open(DATA_WEEKS_LOG, "r") as f:
       reader = csv.DictReader(f)
       fieldnames = reader.fieldnames
 
@@ -98,20 +94,37 @@ class WeeksLog(tk.Frame):
     for header_name in self.headers_name:
       tk.Label(header_row, text=header_name.capitalize(), borderwidth=1, relief="solid", width=20, bg="lightgray").pack(side="left", expand=True, fill="x", ipady=4)
 
+    # CANVAS
+    self.canvas = tk.Canvas(self)
+    self.vscrollbar = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+    self.scrollable_frame = tk.Frame(self.canvas)
+    self.scrollable_frame.bind(
+      "<Configure>",
+      lambda e: self.canvas.configure(
+        scrollregion=self.canvas.bbox("all")
+      )
+    )
+
+    self.canvas.create_window(0, 0, window=self.scrollable_frame, anchor="nw")
+    self.canvas.configure(yscrollcommand=self.vscrollbar.set)
+
     for row_data in self.data:
-      current_row = tk.Frame(self, borderwidth=1, relief="solid", width=20)
+      current_row = tk.Frame(self.scrollable_frame, borderwidth=1, relief="solid", width=20)
       current_row.pack(fill="x", expand=True)
       
       for key, value in row_data.items():
         if key == "Summary":
-          tk.Button(current_row, text="Open", command=lambda x=value: self.open_week_summary(x)).pack(anchor="center")
+          tk.Button(current_row, text="Open", command=lambda x=value: self.open_week_summary(x), width=20).pack(anchor="center", fill="both")
         else:
           tk.Label(current_row, text=str(value).capitalize(), width=20, anchor="center").pack(side="left", fill="x", ipady=2)
+
+    self.canvas.pack(side="left", fill="both", expand=True)
+    self.vscrollbar.pack(side="right", fill="y")
 
   def load_data(self):
     self.data.clear()
 
-    with open(PATH_DATA_WEEKS_LOG_CSV, newline="") as tempdata:
+    with open(DATA_WEEKS_LOG, newline="") as tempdata:
       reader = csv.DictReader(tempdata)
 
       self.headers_name = reader.fieldnames

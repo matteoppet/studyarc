@@ -5,10 +5,7 @@ from datetime import datetime, date
 from tkinter import messagebox
 import json
 from utils import resource_path
-
-PATH_DATA_CURRENT_WEEK_CSV = resource_path("C:/study_tracker/data_current_week.csv")
-PATH_DATA_WEEKS_LOG_CSV = resource_path("C:/study_tracker/data_weeks_log.csv")
-PATH_USER_CONFIG_JSON = resource_path("C:/study_tracker/user_config.json")
+from paths import DATA_CURRENT_WEEK, DATA_WEEKS_LOG, USER_CONFIG
 
 class TimerWindow(tk.Toplevel):
   def __init__(self, master, root):
@@ -119,7 +116,7 @@ class TimerWindow(tk.Toplevel):
       self.clear_last_week()
 
     already_inside = False
-    with open(PATH_DATA_CURRENT_WEEK_CSV, "r") as temp_data:
+    with open(DATA_CURRENT_WEEK, "r") as temp_data:
       reader = csv.DictReader(temp_data)
 
       for row in reader:
@@ -127,7 +124,7 @@ class TimerWindow(tk.Toplevel):
           already_inside = row
           break
 
-    with open(PATH_DATA_CURRENT_WEEK_CSV, "r") as f:
+    with open(DATA_CURRENT_WEEK, "r") as f:
         reader = csv.reader(f)
         data = list(reader)
 
@@ -153,12 +150,12 @@ class TimerWindow(tk.Toplevel):
       row_to_write = [current_day, time_studied, description]
       data.insert(1, row_to_write)
 
-    with open(PATH_DATA_CURRENT_WEEK_CSV, "w", newline="") as f:
+    with open(DATA_CURRENT_WEEK, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerows(data)
 
   def check_new_week(self):
-    with open(PATH_USER_CONFIG_JSON, "r") as file:
+    with open(USER_CONFIG, "r") as file:
       data = json.load(file)
 
     last_day_recorded = data["last_day"]
@@ -166,14 +163,14 @@ class TimerWindow(tk.Toplevel):
     today = date.today()
     today_string = f"{today.year} {today.month} {today.day}"
 
-    with open(PATH_USER_CONFIG_JSON) as f:
+    with open(USER_CONFIG) as f:
       data_json = json.load(f)
 
     if last_day_recorded == "":  
       data_json["last_day"] = today_string
       json_object = json.dumps(data_json, indent=2)
 
-      with open(PATH_USER_CONFIG_JSON, "w") as outfile:
+      with open(USER_CONFIG, "w") as outfile:
         outfile.write(json_object)
 
       return False
@@ -190,7 +187,7 @@ class TimerWindow(tk.Toplevel):
       data_json["last_day"] = today_string
       json_object = json.dumps(data_json, indent=2)
 
-      with open(PATH_USER_CONFIG_JSON, "w") as outfile:
+      with open(USER_CONFIG, "w") as outfile:
         outfile.write(json_object)
 
       return week1 != week2
@@ -199,7 +196,7 @@ class TimerWindow(tk.Toplevel):
     week_days = []
     total_time_studied = 0
 
-    with open(PATH_DATA_WEEKS_LOG_CSV, "r") as reading_file:
+    with open(DATA_WEEKS_LOG, "r") as reading_file:
       reader = csv.DictReader(reading_file)
 
       for row in reader:
@@ -211,7 +208,7 @@ class TimerWindow(tk.Toplevel):
         total_seconds = formatted_hours * 3600 + formatted_minutes * 60 + formatted_seconds
         total_time_studied += total_seconds
     
-    with open(PATH_DATA_WEEKS_LOG_CSV, "r") as data_weeks_log_read:
+    with open(DATA_WEEKS_LOG, "r") as data_weeks_log_read:
       reader = csv.reader(data_weeks_log_read)
       temp_data = list(reader)
 
@@ -221,22 +218,22 @@ class TimerWindow(tk.Toplevel):
     text_to_write = f"{(result_hours):02d}h {(result_minutes):02d}m {(result_seconds):02d}s"
     temp_data.insert(1, [len(temp_data), text_to_write, week_days])
 
-    with open(PATH_DATA_WEEKS_LOG_CSV, "w", newline="") as data_to_write:
+    with open(DATA_WEEKS_LOG, "w", newline="") as data_to_write:
       writer = csv.writer(data_to_write)
       writer.writerows(temp_data)
 
   def clear_last_week(self):
     fieldnames = []
-    with open(PATH_DATA_WEEKS_LOG_CSV) as f:
+    with open(DATA_WEEKS_LOG) as f:
       reader = csv.DictReader(f)
 
       fieldnames = reader.fieldnames 
 
-    f = open(PATH_DATA_WEEKS_LOG_CSV, "w")
+    f = open(DATA_WEEKS_LOG, "w")
     f.truncate()
     f.close()
 
-    with open(PATH_DATA_WEEKS_LOG_CSV, "w", newline="") as csvfile:
+    with open(DATA_WEEKS_LOG, "w", newline="") as csvfile:
       spamwriter = csv.writer(csvfile)
 
       spamwriter.writerow(fieldnames)
@@ -341,7 +338,7 @@ class Home(tk.Frame):
     header_row = tk.Frame(self, width=20)
     header_row.pack(fill="x", expand=True)
     
-    with open(PATH_USER_CONFIG_JSON) as f: temp_data = json.load(f)
+    with open(USER_CONFIG) as f: temp_data = json.load(f)
     for header_name in self.headers_name:
       tk.Label(header_row, text=header_name.capitalize(), borderwidth=1, relief="solid", width=20, bg="lightgray").pack(side="left", expand=True, fill="x", ipady=4)
 
@@ -369,7 +366,7 @@ class Home(tk.Frame):
   def load_data(self):
     self.data.clear()
 
-    with open(PATH_DATA_CURRENT_WEEK_CSV, newline="") as tempdata:
+    with open(DATA_CURRENT_WEEK, newline="") as tempdata:
       reader = csv.DictReader(tempdata)
 
       self.headers_name = reader.fieldnames

@@ -5,58 +5,10 @@ from tkinter import messagebox
 from home import Home
 from weeks_log import WeeksLog
 from utils import resource_path
+from paths import USER_CONFIG, ICON_PATH
 
 import webbrowser
 import json
-from pathlib import Path
-import csv
-
-### CREATION FILES NEEDED
-
-base_dir = Path("C:/study_tracker")
-csv_files = {
-  "data_current_week.csv": [["Day", "Time", "Description"]],
-  "data_weeks_log.csv": [["Week number","Total Time","Summary"]],
-  "user_config.json": {
-    "last_day": "",
-    "session_goal": [0, 30],
-  }
-}
-
-if not base_dir.exists():
-  base_dir.mkdir(parents=True)
-
-  for filename, headers in csv_files.items():
-    file_path = base_dir / filename
-
-    if filename.endswith(".csv"):
-      with open(file_path, "w", newline="") as f:
-        csv.writer(f).writerows(headers)
-
-    elif filename.endswith(".json"):
-      json_object = json.dumps(headers, indent=2)
-
-      with open(file_path, "w") as f:
-        f.write(json_object)
-else:
-  for path, headers in csv_files.items():
-    file_path = base_dir / path
-    path_to_check = Path(file_path)
-
-    if not path_to_check.exists():
-      if path.endswith(".csv"):
-        with open(file_path, "w", newline="") as f:
-          csv.writer(f).writerows(headers)
-
-      elif path.endswith(".json"):
-        json_object = json.dumps(headers, indent=2)
-
-        with open(file_path, "w") as f:
-          f.write(json_object)
-
-PATH_USER_CONFIG_JSON = base_dir / "user_config.json"
-
-###
 
 class Settings(tk.Toplevel):
   def __init__(self, root):
@@ -109,19 +61,19 @@ class Settings(tk.Toplevel):
       if goal_time_list[1] > 60:
         messagebox.showerror("Invalid session goal time", "Session goal time minutes must be below or equal to 60")
       else:
-        with open(PATH_USER_CONFIG_JSON) as f:
+        with open(USER_CONFIG) as f:
           data_json = json.load(f)
         
         data_json["session_goal"] = [int(session_goal_time_string_hours.get()), int(session_goal_time_string_minutes.get())]
         json_object = json.dumps(data_json, indent=2)
 
-        with open(PATH_USER_CONFIG_JSON, "w") as outfile:
+        with open(USER_CONFIG, "w") as outfile:
           outfile.write(json_object)
 
     self.run_sidepanel_frame()
     self.clear_content_frame()
 
-    with open(PATH_USER_CONFIG_JSON, "r") as file:
+    with open(USER_CONFIG, "r") as file:
       settings_data = json.load(file)
 
     frame_title = tk.Frame(self.content_frame)
@@ -137,7 +89,7 @@ class Settings(tk.Toplevel):
 
     frame_session_goal_time = tk.Frame(frame_texts)
     frame_session_goal_time.pack(padx=5, pady=5, anchor="nw", fill="x")
-    with open(PATH_USER_CONFIG_JSON) as f: temp_data = json.load(f)
+    with open(USER_CONFIG) as f: temp_data = json.load(f)
     session_goal_time_string_hours = tk.StringVar()
     session_goal_time_string_hours.set(temp_data["session_goal"][0])
     session_goal_time_string_minutes = tk.StringVar()
@@ -181,8 +133,8 @@ class Main(tk.Tk):
     self.minsize(1000, 500)
     self.title("Study tracker")
 
-    icon = resource_path("../assets/logo_transparent_resized.ico")
-    self.iconbitmap(icon)
+    try: self.iconbitmap(ICON_PATH)
+    except tk.TclError: self.iconbitmap("../assets/logo_transparent_resized.ico")
 
   def run(self):
     for widget in self.winfo_children():
