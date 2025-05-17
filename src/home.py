@@ -4,7 +4,7 @@ import csv
 from datetime import datetime, date
 from tkinter import messagebox
 import json
-from paths import DATA_CURRENT_WEEK, DATA_WEEKS_LOG, USER_CONFIG
+from paths import DATA_CURRENT_WEEK, DATA_WEEKS_LOG, USER_CONFIG, ICON_PATH
 from style import StyleManager
 
 class TimerWindow(tk.Toplevel):
@@ -13,8 +13,11 @@ class TimerWindow(tk.Toplevel):
     self.root = root
     self.master = master
 
+    try: self.iconbitmap(ICON_PATH)
+    except tk.TclError: self.iconbitmap("../assets/logo_transparent_resized.ico")
+
     self.title("Study time")
-    self.minsize(200, 200)
+    self.minsize(300, 200)
     self.topmost = False
     self.attributes("-topmost", self.topmost)
     self.configure(bg=StyleManager.get_item_color("bg"))
@@ -246,6 +249,9 @@ class CreateNewLog(tk.Toplevel):
     self.title("Creation new log")
     self.minsize(400, 250)
 
+    try: self.iconbitmap(ICON_PATH)
+    except tk.TclError: self.iconbitmap("../assets/logo_transparent_resized.ico")
+
     self.container = ttk.Frame(self)
     self.container.pack(fill="both")
 
@@ -338,6 +344,7 @@ class Home(ttk.Frame):
     ttk.Label(current_day_frame, text=f"Today is:").pack(side="left")
     ttk.Label(current_day_frame, text=datetime.today().strftime('%Y-%m-%d'), font=(StyleManager.get_current_font(), 9, "bold")).pack(side="left")
 
+    self.headers_name.insert(0, "Goal")
     self.treeview = ttk.Treeview(
       self,
       columns=self.headers_name,
@@ -351,25 +358,53 @@ class Home(ttk.Frame):
 
       if heading == "Time":
         self.treeview.column(heading, width=140, anchor='center')
+      elif heading == "Goal":
+        self.treeview.column(heading, width=50, anchor='center')
       else:
         self.treeview.column(heading, width=140, anchor='w')
     for row_data in self.data:
+      values_to_insert = []
+
+      for key, value in row_data.items():
+        if key == "Time":
+          formatted_hours = int(value.replace("h", "").split(" ")[0])
+          formatted_minutes = int(value.replace("m", "").split(" ")[1])
+          formatted_seconds = int(value.replace("s", "").split(" ")[2])
+          total_time_studied = formatted_hours * 3600 + formatted_minutes * 60 + formatted_seconds
+
+          with open(USER_CONFIG, "r") as readf:
+            reader = json.load(readf)
+            readf.close()
+
+          goal = reader["session_goal"]
+          goal_to_seconds = goal[0] * 3600 + goal[1] * 60
+
+          if total_time_studied >= goal_to_seconds:
+            values_to_insert.insert(0, "👍")
+          else:
+            values_to_insert.insert(0, "👎")
+
+          values_to_insert.append(value)
+          
+        else:
+          values_to_insert.append(value)
+
       self.treeview.insert(
         "",
         tk.END,
-        values=list(row_data.values()),
+        values=values_to_insert,
       )
 
     for item_id in self.treeview.get_children():
       values = self.treeview.item(item_id, "values")
-      item_day = values[0].split(", ")
+      item_day = values[1].split(", ")
 
       if item_day[1] == datetime.today().strftime('%m-%d'):
         self.treeview.item(item_id, tags="current_day")
 
     # style the treeview
     style.configure("Treeview", rowheight=25) 
-    self.treeview.tag_configure("current_day", background="#cce5ff", foreground="black" if StyleManager.get_current_theme() == "light" else StyleManager.get_item_color("bg"))
+    self.treeview.tag_configure("current_day", background="#cce5ff", foreground="black" if StyleManager.get_current_theme().lower() == "light" else StyleManager.get_item_color("bg"))
     
     self.treeview.pack(side="left", fill="both", expand=True)
 

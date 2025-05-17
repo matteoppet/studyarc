@@ -19,6 +19,11 @@ THEMES = {
     "bg": "#FF90BB",
     "fg": "#000000",
     "bg_table": "#FFC1DA"
+  },
+  "Retro": {
+    "bg": "#bfbfbf",
+    "fg": "#000000",
+    "bg_table": "#8b8b8b"
   }
 }
 
