@@ -4,8 +4,8 @@ import csv
 from datetime import datetime, date
 from tkinter import messagebox
 import json
-from utils import resource_path
 from paths import DATA_CURRENT_WEEK, DATA_WEEKS_LOG, USER_CONFIG
+from style import StyleManager
 
 class TimerWindow(tk.Toplevel):
   def __init__(self, master, root):
@@ -17,6 +17,7 @@ class TimerWindow(tk.Toplevel):
     self.minsize(200, 200)
     self.topmost = False
     self.attributes("-topmost", self.topmost)
+    self.configure(bg=StyleManager.get_item_color("bg"))
 
     self.protocol("WM_DELETE_WINDOW", lambda: self.end_timer())
 
@@ -37,24 +38,24 @@ class TimerWindow(tk.Toplevel):
 
   def display_timer(self):
     # TITLE
-    tk.Label(self, text="Study Timer", font=("Arial 18 bold")).pack(side="top", anchor="center", pady=15, padx=15)
+    ttk.Label(self, text="Study Timer", font=(StyleManager.get_current_font(), 18, "bold")).pack(side="top", anchor="center", pady=15, padx=15)
 
     # TIMER
-    self.timer_label = tk.Label(self, text=f"{(self.count_hours):02d}:{(self.count_minutes):02d}:{(self.count_seconds):02d}", font=("Arial 16"))
+    self.timer_label = ttk.Label(self, text=f"{(self.count_hours):02d}:{(self.count_minutes):02d}:{(self.count_seconds):02d}", font=(StyleManager.get_current_font(), 16))
     self.timer_label.pack(side="top", anchor="center")
 
     # GOAL LABEL
-    tk.Label(self, text=f"Goal: {self.goal_study_time_selected}", foreground="gray").pack(side="top", pady=3, anchor="center")
+    ttk.Label(self, text=f"Goal: {self.goal_study_time_selected}", foreground="gray").pack(side="top", pady=3, anchor="center")
 
     ttk.Separator(self, orient="horizontal").pack(side="top", fill="x", pady=10)
 
-    frame_buttons = tk.Frame(self)
+    frame_buttons = ttk.Frame(self)
     frame_buttons.pack(side="top", padx=10, fil="x")
 
-    button_end_timer = tk.Button(frame_buttons, text="End timer", foreground="dark blue", command=lambda: self.end_timer())
+    button_end_timer = ttk.Button(frame_buttons, text="End timer", command=lambda: self.end_timer())
     button_end_timer.pack(side="right")
 
-    self.button_pin_window_on_top = tk.Button(frame_buttons, text="Pin window", command=lambda: self.pin_window())
+    self.button_pin_window_on_top = ttk.Button(frame_buttons, text="Pin window", command=lambda: self.pin_window())
     self.button_pin_window_on_top.pack(side="left")
 
     self.mainloop()
@@ -196,7 +197,7 @@ class TimerWindow(tk.Toplevel):
     week_days = []
     total_time_studied = 0
 
-    with open(DATA_WEEKS_LOG, "r") as reading_file:
+    with open(DATA_CURRENT_WEEK, "r") as reading_file:
       reader = csv.DictReader(reading_file)
 
       for row in reader:
@@ -224,16 +225,16 @@ class TimerWindow(tk.Toplevel):
 
   def clear_last_week(self):
     fieldnames = []
-    with open(DATA_WEEKS_LOG) as f:
+    with open(DATA_CURRENT_WEEK) as f:
       reader = csv.DictReader(f)
 
       fieldnames = reader.fieldnames 
 
-    f = open(DATA_WEEKS_LOG, "w")
+    f = open(DATA_CURRENT_WEEK, "w")
     f.truncate()
     f.close()
 
-    with open(DATA_WEEKS_LOG, "w", newline="") as csvfile:
+    with open(DATA_CURRENT_WEEK, "w", newline="") as csvfile:
       spamwriter = csv.writer(csvfile)
 
       spamwriter.writerow(fieldnames)
@@ -245,7 +246,7 @@ class CreateNewLog(tk.Toplevel):
     self.title("Creation new log")
     self.minsize(400, 250)
 
-    self.container = tk.Frame(self)
+    self.container = ttk.Frame(self)
     self.container.pack(fill="both")
 
     self.goal_study_time_options = ["No goal", "0h 30m", "0h 45m", "1h 0m", "1h 30m", "2h"]
@@ -258,49 +259,49 @@ class CreateNewLog(tk.Toplevel):
     self.run()
 
   def run(self):
-    tk.Label(self.container, text="Create new log", font=("Arial 15 bold")).pack(side="top", pady=10)
+    ttk.Label(self.container, text="Create new log", font=(StyleManager.get_current_font(), 15, "bold")).pack(side="top", pady=10)
 
     ######################################################################
     
-    quick_info_frame = tk.LabelFrame(self.container, text="Quick Info", pady=5)
+    quick_info_frame = ttk.LabelFrame(self.container, text="Quick Info", padding=(5,5))
     quick_info_frame.pack(side="top", fill="x", padx=5)
 
-    today_date_frame = tk.Frame(quick_info_frame)
+    today_date_frame = ttk.Frame(quick_info_frame)
     today_date_frame.pack(side="top", fill="x")
-    tk.Label(today_date_frame, text="Today date: ", font=("Arial 9 bold")).pack(side="left", padx=10)
-    tk.Label(today_date_frame, text=f"{datetime.today().strftime('%Y-%m-%d')}").pack(side="right", padx=10)
+    ttk.Label(today_date_frame, text="Today date: ", font=(StyleManager.get_current_font(), 9, "bold")).pack(side="left", padx=10)
+    ttk.Label(today_date_frame, text=f"{datetime.today().strftime('%Y-%m-%d')}").pack(side="right", padx=10)
 
-    current_time_frame = tk.Frame(quick_info_frame)
+    current_time_frame = ttk.Frame(quick_info_frame)
     current_time_frame.pack(side="top", fill="x")
-    tk.Label(current_time_frame, text="Current time: ", font=("Arial 9 bold")).pack(side="left", padx=10)
-    tk.Label(current_time_frame, text=f"{datetime.now().strftime('%H:%M:%S')}").pack(side="right", padx=10)
+    ttk.Label(current_time_frame, text="Current time: ", font=(StyleManager.get_current_font(), 9, "bold")).pack(side="left", padx=10)
+    ttk.Label(current_time_frame, text=f"{datetime.now().strftime('%H:%M:%S')}").pack(side="right", padx=10)
 
     ######################################################################
 
-    customization_frame = tk.LabelFrame(self.container, text="Customization")
-    customization_frame.pack(side="top", fill="x", padx=5, ipady=5, pady=5)
+    customization_frame = ttk.LabelFrame(self.container, text="Customization", padding=(5,5))
+    customization_frame.pack(side="top", fill="x", padx=5)
 
-    frame_insert_goal_time = tk.Frame(customization_frame)
+    frame_insert_goal_time = ttk.Frame(customization_frame)
     frame_insert_goal_time.pack(side="top", fill="x")
-    tk.Label(frame_insert_goal_time, text="Goal study time: ", font=("Arial 9 bold")).pack(side="left", padx=10)
+    ttk.Label(frame_insert_goal_time, text="Goal study time: ", font=(StyleManager.get_current_font(), 9, "bold")).pack(side="left", padx=10)
     self.option_menu = ttk.Combobox(frame_insert_goal_time, textvariable=self.goal_study_time_selected, values=self.goal_study_time_options)
     self.option_menu.pack(side="right", padx=10)
 
-    frame_insert_goal_description = tk.Frame(customization_frame)
+    frame_insert_goal_description = ttk.Frame(customization_frame)
     frame_insert_goal_description.pack(side="top", fill="x")
-    tk.Label(frame_insert_goal_description, text="Goal description: ", font=("Arial 9 bold")).pack(side="left", padx=10, pady=2)
+    ttk.Label(frame_insert_goal_description, text="Goal description: ", font=(StyleManager.get_current_font(), 9, "bold")).pack(side="left", padx=10, pady=2)
     entry_description = tk.Entry(frame_insert_goal_description, textvariable=self.goal_study_description, width=30)
     entry_description.pack(side="right", padx=10, pady=2)
 
     ########################################################################
 
-    buttons_frame = tk.Frame(self.container)
+    buttons_frame = ttk.Frame(self.container)
     buttons_frame.pack(side="top", fill="x", padx=5, pady=10)
 
-    button_start = tk.Button(buttons_frame, text="Start", foreground="green", command=lambda: self.start_timer())
+    button_start = ttk.Button(buttons_frame, text="Start", command=lambda: self.start_timer())
     button_start.pack(side="right", padx=10)
 
-    button_cancel = tk.Button(buttons_frame, text="Cancel", foreground="red", command=lambda: self.destroy())
+    button_cancel = ttk.Button(buttons_frame, text="Cancel", command=lambda: self.destroy())
     button_cancel.pack(anchor="e")
 
   def start_timer(self):
@@ -308,7 +309,7 @@ class CreateNewLog(tk.Toplevel):
     self.destroy()
     TimerWindow(self, self.master)
 
-class Home(tk.Frame):
+class Home(ttk.Frame):
   def __init__(self, root, controller):
     super().__init__(root)
     self.controller = controller
@@ -320,48 +321,57 @@ class Home(tk.Frame):
     self.load_data()
 
   def draw_table(self):
+    style = ttk.Style()
+    
     # TITLE FRAME + BUTTON CREATE NEW LOG
-    title_frame = tk.Frame(self)
+    title_frame = ttk.Frame(self)
     title_frame.pack(fill="x")
 
-    tk.Label(title_frame, text="Current week", font="Arial 15 bold").pack(side="left")
+    ttk.Label(title_frame, text="Current week", font=(StyleManager.get_current_font(), 15, "bold")).pack(side="left")
 
-    create_new_log_button = tk.Button(title_frame, text="Create new log", command=lambda: self.create_new_log())
+    create_new_log_button = ttk.Button(title_frame, text="Create new log", command=lambda: self.create_new_log())
     create_new_log_button.pack(side="right")
 
     # CURRENT DAY FRAME
-    current_day_frame = tk.Frame(self)
+    current_day_frame = ttk.Frame(self)
     current_day_frame.pack(fill="x", pady=10)
-    tk.Label(current_day_frame, text=f"Today is: {datetime.today().strftime('%Y-%m-%d')}").pack(side="left")
+    ttk.Label(current_day_frame, text=f"Today is:").pack(side="left")
+    ttk.Label(current_day_frame, text=datetime.today().strftime('%Y-%m-%d'), font=(StyleManager.get_current_font(), 9, "bold")).pack(side="left")
 
-    # DRAW TABLE
-    header_row = tk.Frame(self, width=20)
-    header_row.pack(fill="x", expand=True)
-    
-    with open(USER_CONFIG) as f: temp_data = json.load(f)
-    for header_name in self.headers_name:
-      tk.Label(header_row, text=header_name.capitalize(), borderwidth=1, relief="solid", width=20, bg="lightgray").pack(side="left", expand=True, fill="x", ipady=4)
+    self.treeview = ttk.Treeview(
+      self,
+      columns=self.headers_name,
+      show="headings",
+      height=7
+    )
 
+    # insert data to the treeview
+    for heading in self.headers_name:
+      self.treeview.heading(heading, text=heading)
+
+      if heading == "Time":
+        self.treeview.column(heading, width=140, anchor='center')
+      else:
+        self.treeview.column(heading, width=140, anchor='w')
     for row_data in self.data:
-      row_data_time_formatted_h = int(row_data["Time"].split(" ")[0].replace("h", ""))
-      row_data_time_formatted_m = int(row_data["Time"].split(" ")[1].replace("m", ""))
-      temp_data_time_h = temp_data["session_goal"][0]
-      temp_data_time_m = temp_data["session_goal"][1]
+      self.treeview.insert(
+        "",
+        tk.END,
+        values=list(row_data.values()),
+      )
 
-      current_row = tk.Frame(self, borderwidth=1, relief="solid", width=20)
-      current_row.pack(fill="x", expand=True)
-      
-      for key, value in row_data.items():
-        if key == "Time":
-          if row_data_time_formatted_h >= temp_data_time_h and row_data_time_formatted_m >= temp_data_time_m:
-            tk.Label(current_row, text=str(value).capitalize(), width=20, anchor="center", bg="light green").pack(side="left", fill="x", ipady=2)
-          else:
-            tk.Label(current_row, text=str(value).capitalize(), width=20, anchor="center").pack(side="left", fill="x", ipady=2)
-        else:
-          if row_data_time_formatted_h >= temp_data_time_h and row_data_time_formatted_m >= temp_data_time_m:
-            tk.Label(current_row, text=str(value).capitalize(), width=20, anchor="w", wraplength=150, justify="left", bg="light green").pack(side="left", fill="x", ipady=2)
-          else:
-            tk.Label(current_row, text=str(value).capitalize(), width=20, anchor="w", wraplength=150, justify="left").pack(side="left", fill="x", ipady=2)
+    for item_id in self.treeview.get_children():
+      values = self.treeview.item(item_id, "values")
+      item_day = values[0].split(", ")
+
+      if item_day[1] == datetime.today().strftime('%m-%d'):
+        self.treeview.item(item_id, tags="current_day")
+
+    # style the treeview
+    style.configure("Treeview", rowheight=25) 
+    self.treeview.tag_configure("current_day", background="#cce5ff", foreground="black" if StyleManager.get_current_theme() == "light" else StyleManager.get_item_color("bg"))
+    
+    self.treeview.pack(side="left", fill="both", expand=True)
 
   def load_data(self):
     self.data.clear()

@@ -4,7 +4,10 @@ import sys
 def get_app_dir():
   if getattr(sys, 'frozen', False):  # Running from PyInstaller .exe
       return os.path.dirname(sys.executable)
-  return os.path.dirname(os.path.abspath(__file__))
+  else:
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+
+  return os.path.join(base_dir, "datas")
 
 APP_DIR = get_app_dir()
 

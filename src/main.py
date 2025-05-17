@@ -4,8 +4,8 @@ from tkinter import messagebox
 
 from home import Home
 from weeks_log import WeeksLog
-from utils import resource_path
 from paths import USER_CONFIG, ICON_PATH
+from style import StyleManager
 
 import webbrowser
 import json
@@ -13,46 +13,74 @@ import json
 class Settings(tk.Toplevel):
   def __init__(self, root):
     super().__init__()
+    self.root = root
     self.title("Settings")
-    self.minsize(500,500)
+    self.resizable(False, False)
+    self.geometry("600x600")
 
     self.languages_available = ["English"]
     self.start_week_available = ["Monday", "Sunday"]
 
     self.sidepanel_frame = None
-    self.main_container = tk.Frame(self)
+    self.main_container = ttk.Frame(self)
     self.main_container.pack(fill="both", expand=True)
-    self.content_frame = tk.Frame(self.main_container)
-    self.content_frame.pack(side="right", fill="both", expand=True)
+
+    self.current_theme_stringvar = tk.StringVar()
+    self.current_theme_stringvar.set(StyleManager.get_current_theme())
+    self.current_font_stringvar = tk.StringVar()
+    self.current_font_stringvar.set(StyleManager.get_current_font())
+
+    self.draw()
+
+  def draw(self):
+    frame_sidepanel_title = ttk.Frame(self.main_container)
+    frame_sidepanel_title.pack(side="left", anchor="nw")
+    ttk.Label(frame_sidepanel_title, text="Settings", font=(StyleManager.get_current_font(), 16, "bold")).pack(side="top", pady=15, padx=15)
+    ttk.Separator(frame_sidepanel_title, orient="horizontal").pack(fill="x")
+    ttk.Button(frame_sidepanel_title, text="Appearance", command=lambda: self.run_appearance_frame()).pack(side="top", anchor="nw", pady=15, fill="x")
+    ttk.Button(frame_sidepanel_title, text="Little help", command=lambda: self.run_donation_frame()).pack(side="top", anchor="nw", fill="x")
+
+    self.frame_content = ttk.Frame(self.main_container)
+    self.frame_content.pack(side="right", anchor="nw", expand=True, fill="both")
 
     self.run_appearance_frame()
-  
-  def run_sidepanel_frame(self):
-    if self.sidepanel_frame:
-      self.sidepanel_frame.destroy()
-
-    self.color_sidepanel_frame_background = "light gray"
-    self.sidepanel_frame = tk.Frame(self.main_container, width=150, background=self.color_sidepanel_frame_background)
-    self.sidepanel_frame.pack(side="left", fill="y")
-
-    tk.Label(self.sidepanel_frame, text="Settings", font=("Arial 16 bold"), background=self.color_sidepanel_frame_background).pack(side="top", anchor="center", pady=15, padx=15)
-
-    tk.Button(self.sidepanel_frame, text="Appearance", command=lambda: self.run_appearance_frame()).pack(side="top", anchor="center", fill="x")
-    tk.Button(self.sidepanel_frame, text="Preferences", command=lambda: self.run_preferences_frame()).pack(side="top", anchor="center", fill="x", pady=5)
-    tk.Button(self.sidepanel_frame, text="Little help", command=lambda: self.run_donation_frame()).pack(side="top", anchor="center", fill="x")
 
   def clear_content_frame(self):
-    for widget in self.content_frame.winfo_children():
+    for widget in self.frame_content.winfo_children():
       widget.destroy()
 
   def run_appearance_frame(self):
-    self.run_sidepanel_frame()
+    def change_theme(new_theme):
+      StyleManager.change_theme(new_theme)
+      StyleManager(self.root)
+
+    def change_font(new_font):
+      StyleManager.change_font(new_font)
+      StyleManager(self.root)
+
     self.clear_content_frame()
 
-    tk.Label(self.content_frame, text="Appearance", font=("Arial 18 bold")).pack(padx=15, pady=15, anchor="nw")
-    ttk.Separator(self.content_frame, orient="horizontal").pack(fill="x")
+    ttk.Label(self.frame_content, text="Appearance", font=(StyleManager.get_current_font(), 16)).pack(padx=15, pady=15, anchor="nw")
+    ttk.Separator(self.frame_content, orient="horizontal").pack(fill="x")
 
-    tk.Label(self.content_frame, text="Working on it...").pack(padx=15, pady=15)
+    appearance_frame_content = ttk.Frame(self.frame_content)
+    appearance_frame_content.pack(pady=20)
+
+    frame_themes = ttk.Frame(appearance_frame_content)
+    frame_themes.pack(side="top")
+    ttk.Label(frame_themes, text="Themes", anchor="w", width=15).pack(side="left")
+    themes_menu = ttk.Combobox(frame_themes, textvariable=self.current_theme_stringvar, values=StyleManager.get_all_themes(), width=20)
+    themes_menu.pack(side="right")
+    themes_menu.bind('<<ComboboxSelected>>', lambda event: change_theme(self.current_theme_stringvar.get()))
+
+    ttk.Separator(appearance_frame_content, orient="horizontal").pack(fill="x", pady=5)
+
+    frame_fonts = ttk.Frame(appearance_frame_content)
+    frame_fonts.pack(side="top")
+    ttk.Label(frame_fonts, text="Fonts", anchor="w", width=15).pack(side="left")
+    fonts_menu = ttk.Combobox(frame_fonts, textvariable=self.current_font_stringvar, values=StyleManager.get_all_fonts(), width=20)
+    fonts_menu.pack(side="right")
+    fonts_menu.bind('<<ComboboxSelected>>', lambda event: change_font(self.current_font_stringvar.get()))
 
   def run_preferences_frame(self):
     def apply():
@@ -76,62 +104,63 @@ class Settings(tk.Toplevel):
     with open(USER_CONFIG, "r") as file:
       settings_data = json.load(file)
 
-    frame_title = tk.Frame(self.content_frame)
+    frame_title = ttk.Frame(self.content_frame)
     frame_title.pack(padx=15, pady=15, anchor="nw")
-    tk.Label(frame_title, text="Preferences", font=("Arial 18 bold")).pack(anchor="nw")
+    ttk.Label(frame_title, text="Preferences", font=(StyleManager.get_current_font(), 18, "bold")).pack(anchor="nw")
 
     ttk.Separator(self.content_frame, orient="horizontal").pack(fill="x")
 
     ######################################
 
-    frame_texts = tk.Frame(self.content_frame)
+    frame_texts = ttk.Frame(self.content_frame)
     frame_texts.pack(padx=15, pady=15, anchor="nw", fill="both")
 
-    frame_session_goal_time = tk.Frame(frame_texts)
+    frame_session_goal_time = ttk.Frame(frame_texts)
     frame_session_goal_time.pack(padx=5, pady=5, anchor="nw", fill="x")
     with open(USER_CONFIG) as f: temp_data = json.load(f)
     session_goal_time_string_hours = tk.StringVar()
     session_goal_time_string_hours.set(temp_data["session_goal"][0])
     session_goal_time_string_minutes = tk.StringVar()
     session_goal_time_string_minutes.set(temp_data["session_goal"][1])
-    tk.Label(frame_session_goal_time, text="Session goal time").pack(side="left")
+    ttk.Label(frame_session_goal_time, text="Session goal time").pack(side="left")
     # MINUTES
-    tk.Label(frame_session_goal_time, text="Minutes").pack(side="right")
+    ttk.Label(frame_session_goal_time, text="Minutes").pack(side="right")
     tk.Entry(frame_session_goal_time, width=3, textvariable=session_goal_time_string_minutes).pack(side="right", padx=2)
     # HOURS
-    tk.Label(frame_session_goal_time, text="Hours").pack(side="right", padx=2)
+    ttk.Label(frame_session_goal_time, text="Hours").pack(side="right", padx=2)
     tk.Entry(frame_session_goal_time, width=3, textvariable=session_goal_time_string_hours).pack(side="right")
 
-    frame_button_apply = tk.Frame(self.content_frame)
+    frame_button_apply = ttk.Frame(self.content_frame)
     frame_button_apply.pack(padx=15, pady=15, side="bottom", fill="both")
     tk.Button(frame_button_apply, text="Apply", width=10, command=lambda: apply()).pack(side="right")
 
   def run_donation_frame(self):
-    self.run_sidepanel_frame()
     self.clear_content_frame()
 
-    frame_title = tk.Frame(self.content_frame)
+    frame_title = ttk.Frame(self.frame_content)
     frame_title.pack(padx=15, pady=15, anchor="nw")
-    tk.Label(frame_title, text="Little help from you!", font=("Arial 18 bold")).pack(anchor="nw")
+    ttk.Label(frame_title, text="Little help from you!", font=(StyleManager.get_current_font(), 16)).pack(anchor="nw")
 
-    ttk.Separator(self.content_frame, orient="horizontal").pack(fill="x")
+    ttk.Separator(self.frame_content, orient="horizontal").pack(fill="x")
 
-    frame_texts = tk.Frame(self.content_frame)
+    frame_texts = ttk.Frame(self.frame_content)
     frame_texts.pack(padx=15, pady=15, anchor="nw")
 
-    tk.Label(frame_texts, text="💛 Made with love (and a lot of late-night coding)!", font=("Arial 10 bold")).pack(anchor="nw")
-    tk.Label(frame_texts, text=f"If this little tracker helps make your days easier, i'd be thrilled if you sent a coffe my way\nNo pressure -- One coffe = one happy coder☕", justify="left").pack(anchor="nw")
-    link = tk.Label(frame_texts, text="👉 buymeacoffee.com/matteopet", fg="blue", cursor="hand2")
+    ttk.Label(frame_texts, text="💛 Made with love (and a lot of late-night coding)!", font=("Arial 10 bold")).pack(anchor="nw")
+    ttk.Label(frame_texts, text=f"If this little tracker helps make your days easier, i'd be thrilled if you sent a coffe my way\nNo pressure -- One coffe = one happy coder☕", justify="left").pack(anchor="nw")
+    link = ttk.Label(frame_texts, text="👉 buymeacoffee.com/matteopet", cursor="hand2")
     link.pack(anchor="nw")
     link.bind("<Button-1>", lambda e: webbrowser.open_new("https://buymeacoffee.com/matteopet"))
 
-    tk.Label(frame_texts, text="Thank you!").pack(anchor="center", pady=15)
+    ttk.Label(frame_texts, text="Thank you!").pack(anchor="center", pady=15)
 
 class Main(tk.Tk):
   def __init__(self):
     super().__init__()
     self.minsize(1000, 500)
     self.title("Study tracker")
+
+    StyleManager(self)
 
     try: self.iconbitmap(ICON_PATH)
     except tk.TclError: self.iconbitmap("../assets/logo_transparent_resized.ico")
@@ -141,18 +170,22 @@ class Main(tk.Tk):
       widget.destroy()
 
     menubar = tk.Menu(self)
-    self.config(menu=menubar)
 
     more_menu = tk.Menu(menubar, tearoff=0)
     more_menu.add_command(label="Settings", command=lambda: self.open_settings())
-    more_menu.add_command(label="Help", command=lambda: self.open_help())
+    more_menu.add_command(label="Documentation", command=lambda: self.open_help())
+    more_menu.add_command(label="About", command=lambda: self.open_help())
+    more_menu.add_separator()
+    more_menu.add_command(label="Exit", command=lambda: self.destroy())
 
-    menubar.add_cascade(label="More", menu=more_menu)
+    menubar.add_cascade(label="Help", menu=more_menu)
 
-    self.container = tk.Frame(self)
+    self.config(menu=menubar)
+
+    self.container = ttk.Frame(self)
     self.container.pack(fill="both", expand=True)
 
-    tk.Label(self.container, text="Study Tracker", font=("Arial 18 bold")).pack(anchor="center", padx=15, pady=15)
+    ttk.Label(self.container, text="Study Tracker", font=(StyleManager.get_current_font(), 18, "bold")).pack(anchor="center", padx=15, pady=15)
 
     self.home_frame = Home(self.container, self)
     self.home_frame.draw_table()
