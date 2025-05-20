@@ -1,9 +1,14 @@
 {
-  "last_day": "2025 5 17",
+  "last_day": "2025 5 19",
   "session_goal": [
     0,
     30
   ],
   "theme": "Light",
-  "font": "Microsoft JhengHei UI"
+  "font": "Microsoft JhengHei UI",
+  "subjects": [
+    "Math",
+    "Physics",
+    "Arduino"
+  ]
 }

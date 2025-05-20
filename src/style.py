@@ -35,6 +35,7 @@ class StyleManager:
     self.current_font = self.get_current_font()
 
     self.style = ttk.Style()
+
     self.update_theme()
 
   def update_theme(self):
@@ -51,6 +52,7 @@ class StyleManager:
     self.style.configure("TLabelframe.Label", background=bg, foreground=fg)
     
     # items
+    self.style.configure("Red.TButton", background="red3", foreground="white")
     self.style.configure("TLabel", background=bg, foreground=fg, font=custom_font)
     self.style.configure("TButton", background="#568af2", foreground="black")
     self.style.configure("Treeview", background=THEMES[self.current_theme]["bg_table"], fieldbackground=THEMES[self.current_theme]["bg_table"], foreground=fg, font=(custom_font, 9))

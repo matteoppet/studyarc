@@ -1,11 +1,13 @@
 import tkinter as tk
 from tkinter import ttk
 import csv
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from tkinter import messagebox
 import json
 from paths import DATA_CURRENT_WEEK, DATA_WEEKS_LOG, USER_CONFIG, ICON_PATH
 from style import StyleManager
+from tkcalendar import *
+from utils import time_to_seconds, seconds_to_time
 
 class TimerWindow(tk.Toplevel):
   def __init__(self, master, root):
@@ -18,6 +20,9 @@ class TimerWindow(tk.Toplevel):
 
     self.title("Study time")
     self.minsize(300, 200)
+    mouse_x = self.winfo_pointerx()
+    mouse_y = self.winfo_pointery()
+    self.geometry(f"+{mouse_x}+{mouse_y}")
     self.topmost = False
     self.attributes("-topmost", self.topmost)
     self.configure(bg=StyleManager.get_item_color("bg"))
@@ -32,7 +37,7 @@ class TimerWindow(tk.Toplevel):
     self.current_week_day = self.week_days[datetime.weekday(datetime.today())].capitalize()
 
     self.goal_study_time_selected = self.master.goal_study_time_selected.get()
-    self.goal_description = self.master.goal_study_description.get()
+    self.goal_description = self.master.study_subject.get()
     self.goal_formatted_time = self.goal_study_time_selected.replace("h", "").replace("m", "").replace("s", "")
 
     self.id_timer = self.after(1000, self.update_timer)
@@ -138,14 +143,12 @@ class TimerWindow(tk.Toplevel):
       formatted_minutes = int(time_to_add.replace("m", "").split(" ")[1])
       formatted_seconds = int(time_to_add.replace("s", "").split(" ")[2])
 
-      total_seconds_1 = formatted_hours * 3600 + formatted_minutes * 60 + formatted_seconds
-      total_seconds_2 = self.count_hours * 3600 + self.count_minutes * 60 + self.count_seconds
+      total_seconds_1 = time_to_seconds(formatted_hours, formatted_minutes) + formatted_seconds
+      total_seconds_2 = time_to_seconds(self.count_hours, self.count_minutes) + self.count_seconds
       total_seconds = total_seconds_1 + total_seconds_2
 
-      result_hours = total_seconds // 3600
-      result_minutes = (total_seconds % 3600) // 60
-      result_seconds = total_seconds % 60
-      text_to_write = f"{(result_hours):02d}h {(result_minutes):02d}m {(result_seconds):02d}s"
+      time = seconds_to_time(total_seconds)
+      text_to_write = f"{(time[0]):02d}h {(time[1]):02d}m {(time[2]):02d}s"
       row_to_write = [current_day, text_to_write, f"{row["Description"]}, {description}"]
 
       data.pop(1)
@@ -246,8 +249,12 @@ class CreateNewLog(tk.Toplevel):
   def __init__(self, master):
     super().__init__(master)
     self.master = master
-    self.title("Creation new log")
-    self.minsize(400, 250)
+    self.title("Creation")
+    self.minsize(400, 200)
+    mouse_x = self.winfo_pointerx()
+    mouse_y = self.winfo_pointery()
+    self.geometry(f"+{mouse_x}+{mouse_y}")
+    self.resizable(False, False)
 
     try: self.iconbitmap(ICON_PATH)
     except tk.TclError: self.iconbitmap("../assets/logo_transparent_resized.ico")
@@ -259,56 +266,203 @@ class CreateNewLog(tk.Toplevel):
     self.goal_study_time_selected = tk.StringVar(self)
     self.goal_study_time_selected.set(self.goal_study_time_options[0])
 
-    self.goal_study_description = tk.StringVar(self)
-    self.goal_study_description.set("")
+    self.selected_day = tk.StringVar(self)
+
+    self.study_subject = tk.StringVar(self)
+    with open(USER_CONFIG, "r") as readf:
+      data = json.load(readf)
+      readf.close()
+    self.study_subject_options = data["subjects"]
+    self.study_subject.set(data["subjects"][0])
 
     self.run()
 
   def run(self):
-    ttk.Label(self.container, text="Create new log", font=(StyleManager.get_current_font(), 15, "bold")).pack(side="top", pady=10)
+    notebook = ttk.Notebook(self.container)
+    notebook.pack(expand=True, fill="both")
 
-    ######################################################################
-    
-    quick_info_frame = ttk.LabelFrame(self.container, text="Quick Info", padding=(5,5))
-    quick_info_frame.pack(side="top", fill="x", padx=5)
+    frame_current_log = ttk.Frame(notebook)
+    frame_old_log = ttk.Frame(notebook)
 
-    today_date_frame = ttk.Frame(quick_info_frame)
-    today_date_frame.pack(side="top", fill="x")
-    ttk.Label(today_date_frame, text="Today date: ", font=(StyleManager.get_current_font(), 9, "bold")).pack(side="left", padx=10)
-    ttk.Label(today_date_frame, text=f"{datetime.today().strftime('%Y-%m-%d')}").pack(side="right", padx=10)
+    frame_current_log.pack(fill="both", expand=True)
+    frame_old_log.pack(fill="both", expand=True)
 
-    current_time_frame = ttk.Frame(quick_info_frame)
-    current_time_frame.pack(side="top", fill="x")
-    ttk.Label(current_time_frame, text="Current time: ", font=(StyleManager.get_current_font(), 9, "bold")).pack(side="left", padx=10)
-    ttk.Label(current_time_frame, text=f"{datetime.now().strftime('%H:%M:%S')}").pack(side="right", padx=10)
+    notebook.add(frame_current_log, text="Create new log")
+    notebook.add(frame_old_log, text="Add log")
 
-    ######################################################################
+    self.draw_current_log(frame_current_log)
+    self.draw_old_log(frame_old_log)
 
-    customization_frame = ttk.LabelFrame(self.container, text="Customization", padding=(5,5))
-    customization_frame.pack(side="top", fill="x", padx=5)
+  def draw_current_log(self, frame):
+    ttk.Label(frame, text="Study time!", font=(StyleManager.get_current_font(), 15, "bold")).pack(side="top", anchor="w", padx=10, pady=10)
 
-    frame_insert_goal_time = ttk.Frame(customization_frame)
-    frame_insert_goal_time.pack(side="top", fill="x")
-    ttk.Label(frame_insert_goal_time, text="Goal study time: ", font=(StyleManager.get_current_font(), 9, "bold")).pack(side="left", padx=10)
-    self.option_menu = ttk.Combobox(frame_insert_goal_time, textvariable=self.goal_study_time_selected, values=self.goal_study_time_options)
-    self.option_menu.pack(side="right", padx=10)
+    frame_current_day = ttk.Frame(frame)
+    frame_current_day.pack(side="top", fill="x", padx=10)
+    ttk.Label(frame_current_day, text="Current day:").pack(side="left")
+    ttk.Label(frame_current_day, text=datetime.today().strftime('%Y-%m-%d')).pack(side="right")
 
-    frame_insert_goal_description = ttk.Frame(customization_frame)
-    frame_insert_goal_description.pack(side="top", fill="x")
-    ttk.Label(frame_insert_goal_description, text="Goal description: ", font=(StyleManager.get_current_font(), 9, "bold")).pack(side="left", padx=10, pady=2)
-    entry_description = tk.Entry(frame_insert_goal_description, textvariable=self.goal_study_description, width=30)
-    entry_description.pack(side="right", padx=10, pady=2)
+    ttk.Separator(frame, orient="horizontal").pack(side="top", fill="x", padx=10, pady=10)
 
-    ########################################################################
+    frame_study_time_goal = ttk.Frame(frame)
+    frame_study_time_goal.pack(side="top", fill="x", padx=10)
+    ttk.Label(frame_study_time_goal, text="Study time goal:").pack(side="left")
+    study_time_goal_menu = ttk.Combobox(frame_study_time_goal, textvariable=self.goal_study_time_selected, values=self.goal_study_time_options)
+    study_time_goal_menu.pack(side="right")
 
-    buttons_frame = ttk.Frame(self.container)
-    buttons_frame.pack(side="top", fill="x", padx=5, pady=10)
+    frame_subjet = ttk.Frame(frame)
+    frame_subjet.pack(side="top", fill="x", padx=10, pady=3)
+    ttk.Label(frame_subjet, text="Subject:").pack(side="left")
+    study_subject_menu = ttk.Combobox(frame_subjet, textvariable=self.study_subject, values=self.study_subject_options)
+    study_subject_menu.pack(side="right")
 
-    button_start = ttk.Button(buttons_frame, text="Start", command=lambda: self.start_timer())
-    button_start.pack(side="right", padx=10)
+    ttk.Separator(frame, orient="horizontal").pack(fill="x", side="top", padx=10, pady=10)
 
-    button_cancel = ttk.Button(buttons_frame, text="Cancel", command=lambda: self.destroy())
-    button_cancel.pack(anchor="e")
+    frame_buttons = ttk.Frame(frame)
+    frame_buttons.pack(side="top", fill="x", padx=10, pady=5)
+    button_start_timer = ttk.Button(frame_buttons, text="Start", command=lambda: self.start_timer())
+    button_start_timer.pack(side="right")
+    button_cancel = ttk.Button(frame_buttons, text="Cancel", command=lambda: self.destroy())
+    button_cancel.pack(side="right")
+
+  def draw_old_log(self, frame):
+    ttk.Label(frame, text="Forgot to log your session?", font=(StyleManager.get_current_font(), 15, "bold")).pack(side="top", anchor="w", padx=10, pady=10)
+
+    frame_select_day = ttk.Frame(frame)
+    frame_select_day.pack(side="top", fill="x", padx=10)
+    ttk.Label(frame_select_day, text="Select week-day:").pack(side="left")
+
+    week_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    today = date.today()
+    start_of_week = today - timedelta(days=today.weekday())
+    week_dates = [(start_of_week + timedelta(days=i)).day for i in range(7)]
+    options_days = [f"{week_days[i]}, {week_dates[i]}"for i in range(0,7)]
+    self.selected_day.set(options_days[week_dates.index(today.day)])
+    days_current_week = ttk.Combobox(frame_select_day, textvariable=self.selected_day, values=options_days)
+    days_current_week.pack(side="right")
+
+    ttk.Separator(frame, orient="horizontal").pack(fill="x", side="top", padx=10, pady=10)
+
+    frame_select_time = ttk.Frame(frame)
+    frame_select_time.pack(side="top", fill="x", padx=10)
+    ttk.Label(frame_select_time, text="Insert time:").pack(side="left")
+
+    self.hours_inserted_stringvar = tk.StringVar()
+    self.minutes_inserted_stringvar = tk.StringVar()
+
+    ttk.Label(frame_select_time, text="minutes").pack(side="right", padx=5)
+    ttk.Entry(frame_select_time, textvariable=self.minutes_inserted_stringvar, width=4).pack(side="right")
+
+    ttk.Label(frame_select_time, text="hours").pack(side="right", padx=5)
+    ttk.Entry(frame_select_time, textvariable=self.hours_inserted_stringvar, width=4).pack(side="right")
+
+    frame_select_subject = ttk.Frame(frame)
+    frame_select_subject.pack(side="top", fill="x", padx=10, pady=3)
+    ttk.Label(frame_select_subject, text="Subject:").pack(side="left")
+    study_subject_menu = ttk.Combobox(frame_select_subject, textvariable=self.study_subject, values=self.study_subject_options)
+    study_subject_menu.pack(side="right")
+
+    ttk.Separator(frame, orient="horizontal").pack(fill="x", side="top", padx=10, pady=10)
+
+    frame_buttons = ttk.Frame(frame)
+    frame_buttons.pack(side="top", fill="x", padx=10, pady=5)
+    button_start_timer = ttk.Button(frame_buttons, text="Insert", command=lambda: self.insert_old_log())
+    button_start_timer.pack(side="right")
+    button_cancel = ttk.Button(frame_buttons, text="Cancel", command=lambda: self.destroy())
+    button_cancel.pack(side="right")
+
+  def insert_old_log(self):
+    hours = self.hours_inserted_stringvar.get()
+    minutes = self.minutes_inserted_stringvar.get()
+
+    if hours == "" or minutes == "":
+      messagebox.showerror("Empty values", "Values of hours or minutes cannot be empty")
+
+    else:
+      hours = int(hours)
+      minutes = int(minutes)
+
+      day_log = self.selected_day.get()
+      time_to_seconds_new_log = time_to_seconds(hours, minutes)
+      subject_to_log = self.study_subject.get()
+
+      new_time_logged = False
+
+      # find if already exists, add to that row
+      # if not, add to the row next to the day before
+      rows_to_write = []
+      count = 0
+      with open(DATA_CURRENT_WEEK, "r") as readf:
+        reader = csv.DictReader(readf)
+
+        day_to_log = int(day_log.split(", ")[1])
+        for row in reader:
+          day_current_row = int(row["Day"].split(", ")[1].split("-")[1])
+
+          if day_current_row == day_to_log:
+            seconds_current_day = time_to_seconds(
+              int(row["Time"].split(" ")[0].replace("h", "")),
+              int(row["Time"].split(" ")[1].replace("m", "")),
+            ) + int(row["Time"].split(" ")[2].replace("s", ""))
+
+            new_time_in_seconds = time_to_seconds_new_log + seconds_current_day
+            new_time_list = seconds_to_time(new_time_in_seconds)
+            new_time_formatted = f"{new_time_list[0]:02d}h {new_time_list[1]:02d}m {new_time_list[2]:02d}s"
+
+            current_row_to_write = {key: 0 for key in row.keys()}
+            for key, value in row.items():
+              if key == "Time":
+                current_row_to_write[key] = new_time_formatted
+              elif key == "Description":
+                current_row_to_write[key] = f"{value}" + ", " + subject_to_log
+              else:
+                current_row_to_write[key] = value
+
+            rows_to_write.append(current_row_to_write)
+            new_time_logged = True
+
+          else:
+            rows_to_write.append(row)
+
+          count += 1
+
+        if not new_time_logged:
+          count = 0
+          for row in rows_to_write:
+            day_current_row = int(row["Day"].split(", ")[1].split("-")[1])
+
+            if day_current_row <= day_to_log-1 or day_current_row >= day_to_log+1:
+              new_time_in_seconds = time_to_seconds_new_log
+              new_time_list = seconds_to_time(new_time_in_seconds)
+              new_time_formatted = f"{new_time_list[0]:02d}h {new_time_list[1]:02d}m {new_time_list[2]:02d}s"
+
+              formatted_day = str(day_log.split(", ")[0]) + ", " + str(f"{datetime.today().month:02d}") + "-" + str(day_log.split(", ")[1])
+
+              current_row_to_write = {"Day": 0, "Time": 0, "Description": 0}
+              current_row_to_write["Day"] = formatted_day
+              current_row_to_write["Time"] = new_time_formatted
+              current_row_to_write["Description"] = subject_to_log
+
+              if day_to_log < day_current_row:
+                count += 1
+
+              rows_to_write.insert(count, current_row_to_write)
+              break
+
+            count += 1
+        readf.close()
+
+      print(rows_to_write)
+
+      with open(DATA_CURRENT_WEEK, "w", newline="") as writef:
+        writer = csv.DictWriter(writef, fieldnames=rows_to_write[0].keys())
+        writer.writeheader()
+        writer.writerows(rows_to_write)
+
+      self.master.clear_widgets()
+      self.master.load_data()
+      self.master.draw_table()
+      self.destroy()
+
 
   def start_timer(self):
     self.master.controller.withdraw()
@@ -370,7 +524,7 @@ class Home(ttk.Frame):
           formatted_hours = int(value.replace("h", "").split(" ")[0])
           formatted_minutes = int(value.replace("m", "").split(" ")[1])
           formatted_seconds = int(value.replace("s", "").split(" ")[2])
-          total_time_studied = formatted_hours * 3600 + formatted_minutes * 60 + formatted_seconds
+          total_time_studied = time_to_seconds(formatted_hours, formatted_minutes) + formatted_seconds
 
           with open(USER_CONFIG, "r") as readf:
             reader = json.load(readf)
@@ -407,6 +561,10 @@ class Home(ttk.Frame):
     self.treeview.tag_configure("current_day", background="#cce5ff", foreground="black" if StyleManager.get_current_theme().lower() == "light" else StyleManager.get_item_color("bg"))
     
     self.treeview.pack(side="left", fill="both", expand=True)
+
+  def clear_widgets(self):
+    for widgets in self.winfo_children():
+      widgets.destroy()
 
   def load_data(self):
     self.data.clear()
