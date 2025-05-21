@@ -3,6 +3,7 @@
 Minimal Study Tracker is a lightweight desktop app to help you track your study time and visualize your weekly progress. Built using Python and Tkinter, this app provides a simple and distraction-free way to stay productive.
 
 ## Preview
+![App Screenshot](assets/preview.png)
 
 ## Features
 - Track your daily study time
