@@ -62,7 +62,6 @@ class StyleManager:
   def change_theme(new_theme):
     with open(USER_CONFIG, "r") as readf:
       reader = json.load(readf)
-      readf.close()
 
     reader["theme"] = new_theme
 
@@ -73,7 +72,6 @@ class StyleManager:
   def change_font(new_font):
     with open(USER_CONFIG, "r") as readf:
       reader = json.load(readf)
-      readf.close()
 
     reader["font"] = new_font
 
@@ -88,15 +86,13 @@ class StyleManager:
   def get_current_theme():
     with open(USER_CONFIG, "r") as readf:
       reader = json.load(readf)
-      readf.close()
-    return reader["theme"]
+    return reader.get("theme", "Light")
   
   @staticmethod
   def get_current_font():
     with open(USER_CONFIG, "r") as readf:
       reader = json.load(readf)
-      readf.close()
-    return reader["font"]
+    return reader.get("font", "Arial")
 
   @staticmethod
   def get_all_themes():

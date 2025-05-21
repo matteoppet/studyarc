@@ -127,40 +127,90 @@ class Settings(tk.Toplevel):
     ttk.Label(self.frame_content, text="Settings", font=(StyleManager.get_current_font(), 16)).pack(padx=15, pady=15, anchor="nw")
     ttk.Separator(self.frame_content, orient="horizontal").pack(fill="x")
 
+    ############### APPEARANCE SECTION
     appearance_frame_content = ttk.Frame(self.frame_content)
-    appearance_frame_content.pack(pady=20)
+    appearance_frame_content.pack(side="top", pady=20)
     ttk.Label(appearance_frame_content, text="Appearance", font=(StyleManager.get_current_font(), 14, "bold")).pack(side="top", anchor="nw")
     ttk.Separator(appearance_frame_content, orient="horizontal").pack(side="top", fill="x", pady=10)
 
     frame_themes = ttk.Frame(appearance_frame_content)
     frame_themes.pack(side="top")
-    ttk.Label(frame_themes, text="Themes", anchor="w", width=20).pack(side="left")
+    ttk.Label(frame_themes, text="Themes", anchor="w", width=26).pack(side="left")
     themes_menu = ttk.Combobox(frame_themes, textvariable=self.current_theme_stringvar, values=StyleManager.get_all_themes(), width=20)
     themes_menu.pack(side="right")
     themes_menu.bind('<<ComboboxSelected>>', lambda event: change_theme(self.current_theme_stringvar.get()))
 
     frame_fonts = ttk.Frame(appearance_frame_content)
     frame_fonts.pack(side="top", pady=4)
-    ttk.Label(frame_fonts, text="Fonts", anchor="w", width=20).pack(side="left")
+    ttk.Label(frame_fonts, text="Fonts", anchor="w", width=26).pack(side="left")
     fonts_menu = ttk.Combobox(frame_fonts, textvariable=self.current_font_stringvar, values=StyleManager.get_all_fonts(), width=20)
     fonts_menu.pack(side="right")
     fonts_menu.bind('<<ComboboxSelected>>', lambda event: change_font(self.current_font_stringvar.get()))
 
+    ############### STUDY SETUP SECTION
     study_setup_content = ttk.Frame(self.frame_content)
-    study_setup_content.pack(pady=20)
+    study_setup_content.pack(side="top", pady=20)
     ttk.Label(study_setup_content, text="Study Setup", font=(StyleManager.get_current_font(), 14, "bold")).pack(side="top", anchor="nw")
     ttk.Separator(study_setup_content, orient="horizontal").pack(side="top", fill="x", pady=10)
-    ttk.Label(study_setup_content, text="Subjects", anchor="w", width=15).pack(side="left", anchor="nw")
 
-    frame_buttons_study_setup = ttk.Frame(study_setup_content)
+    frame_subjects = ttk.Frame(study_setup_content)
+    frame_subjects.pack(side="top", anchor="nw", pady=4)
+    ttk.Label(frame_subjects, text="Subjects", anchor="w", width=20).pack(side="left", anchor="nw")
+
+    frame_buttons_study_setup = ttk.Frame(frame_subjects)
     frame_buttons_study_setup.pack(side="right", anchor="nw")
     button_add_subject = ttk.Button(frame_buttons_study_setup, text="Add", width=5, command=lambda: self.add_subject())
-    button_add_subject.pack(side="top")
+    button_add_subject.pack(side="top", anchor="nw")
     button_delete_subject = ttk.Button(frame_buttons_study_setup, text="Del", width=5, style="Red.TButton", command=lambda: self.delete_subject())
     button_delete_subject.pack(side="top", pady=2)
 
-    self.listbox_subjects = tk.Listbox(study_setup_content, listvariable=self.subjects_available_stringvar, height=len(self.list_subjects_available))
+    self.listbox_subjects = tk.Listbox(frame_subjects, listvariable=self.subjects_available_stringvar, height=len(self.list_subjects_available))
     self.listbox_subjects.pack(side="right", padx=5, anchor="n")
+
+    frame_daily_goal = ttk.Frame(study_setup_content)
+    frame_daily_goal.pack(side="top", pady=4)
+    ttk.Label(frame_daily_goal, text="Daily goal", width=15).pack(side="left")
+
+    self.hours_inserted_stringvar = tk.StringVar()
+    self.minutes_inserted_stringvar = tk.StringVar()
+
+    with open(USER_CONFIG, "r") as readf:
+      data = json.load(readf)
+
+      self.hours_inserted_stringvar.set(data["session_goal"][0])
+      self.minutes_inserted_stringvar.set(data["session_goal"][1]) 
+
+      readf.close()
+
+    ttk.Button(frame_daily_goal, text="Apply", width=6, command=lambda: self.change_session_goal_time()).pack(side="right")
+
+    ttk.Label(frame_daily_goal, text="minutes").pack(side="right", padx=5)
+    ttk.Entry(frame_daily_goal, textvariable=self.minutes_inserted_stringvar, width=4).pack(side="right")
+
+    ttk.Label(frame_daily_goal, text="hours").pack(side="right", padx=5)
+    ttk.Entry(frame_daily_goal, textvariable=self.hours_inserted_stringvar, width=4).pack(side="right")
+
+
+  def change_session_goal_time(self):
+    new_hours = self.hours_inserted_stringvar.get()
+    new_minutes = self.minutes_inserted_stringvar.get()
+
+    try:
+      new_hours = abs(int(new_hours))
+      new_minutes = abs(int(new_minutes))
+
+      with open(USER_CONFIG, "r") as readf:
+        data = json.load(readf)
+        readf.close()
+
+      data["session_goal"] = [new_hours, new_minutes]
+
+      with open(USER_CONFIG, "w") as writef:
+        writef.write(json.dumps(data, indent=2))
+        writef.close()
+
+    except ValueError:
+      messagebox.showerror("Value error", "The values must be numeric to be valid.")
 
   def add_subject(self):
     self.NewSubjectWindow(self)
