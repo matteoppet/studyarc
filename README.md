@@ -23,7 +23,8 @@ cd Study-Tracker
 python main.py
 ```
 
-> To uninstall the app, go to the installation folder, default will be `C:\Program Files (x86)\Study Tracker` and run `unins000.exe`
+> Step 1: To uninstall the app, go to the installation folder, default will be `C:\Program Files (x86)\Study Tracker` and run `unins000.exe`
+> Step 2: Go to `C:\Users\(your user)\AppData\Roaming` and delete the folder `Study Tracker`
 
 ## Support the Project
 If you find this project helpful, consider donating via the link in the Settings page of the app. Your support helps maintain and improve the tool! Thank you!
