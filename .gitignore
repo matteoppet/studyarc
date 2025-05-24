@@ -2,12 +2,7 @@
 /src/*json
 /src/*.yaml
 /env
-/build.bat
-/dist
-/build
-/installer_source
-/output
 /notes.txt
-/main.spec
 /__pycache__
 /
+/builds
