@@ -12,6 +12,7 @@ import webbrowser
 import json
 import shutil
 import os
+import urllib.request
 
 class Settings(tk.Toplevel):
   class NewSubjectWindow(tk.Toplevel):
@@ -372,6 +373,8 @@ class Main(tk.Tk):
     try: self.iconbitmap(ICON_PATH)
     except tk.TclError: self.iconbitmap("../assets/logo_transparent_resized.ico")
 
+    self.check_updates()
+
   def run(self):
     for widget in self.winfo_children():
       widget.destroy()
@@ -408,6 +411,16 @@ class Main(tk.Tk):
 
   def open_help(self):
     print("TODO help")
+
+  def check_updates(self):
+    def get_remote_version(url):
+      with urllib.request.urlopen(url) as response:
+          return response.read().decode().strip()
+    
+    remote_url = "https://raw.githubusercontent.com/matteoppet/study_tracker/main/data/version.txt"
+    remote_version = get_remote_version(remote_url)
+
+    print(remote_version)
 
 if __name__ == "__main__":
   main = Main()
