@@ -29,7 +29,7 @@ class Settings(tk.Toplevel):
       self.geometry(f"+{mouse_x}+{mouse_y}")
 
       try: self.iconbitmap(ICON_PATH)
-      except tk.TclError: self.iconbitmap("../assets/logo_transparent_resized.ico")
+      except tk.TclError: self.iconbitmap("../assets/logo.ico")
 
       self.new_subject_stringvar = tk.StringVar()
       
@@ -80,7 +80,7 @@ class Settings(tk.Toplevel):
     self.minsize(600, 600)
 
     try: self.iconbitmap(ICON_PATH)
-    except tk.TclError: self.iconbitmap("../assets/logo_transparent_resized.ico")
+    except tk.TclError: self.iconbitmap("../assets/logo.ico")
 
     self.languages_available = ["English"]
     self.start_week_available = ["Monday", "Sunday"]
