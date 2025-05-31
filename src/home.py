@@ -272,6 +272,7 @@ class TimerWindow(tk.Toplevel):
     self.draw_timer()
 
   def reset_and_save(self):
+    self.after_cancel(self.id_timer)
     self.save_log()
     self.reset()
 
@@ -504,8 +505,6 @@ class CreateNewLog(tk.Toplevel):
 
             count += 1
         readf.close()
-
-      print(rows_to_write)
 
       with open(DATA_CURRENT_WEEK, "w", newline="") as writef:
         writer = csv.DictWriter(writef, fieldnames=rows_to_write[0].keys())
