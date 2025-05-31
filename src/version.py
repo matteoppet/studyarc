@@ -4,7 +4,7 @@ import sys
 import os
 
 CURRENT_VERSION = "1.2.0"
-REMOTE_URL = "https://raw.githubusercontent.com/matteoppet/study_tracker/main/data/version.txt"
+REMOTE_URL = "https://raw.githubusercontent.com/matteoppet/studyarc/main/data/version.txt"
 
 def get_remote_version(url):
   with urllib.request.urlopen(url) as response:
@@ -19,7 +19,7 @@ def check_new_version():
 def install_new_version():
   remote_version = get_remote_version(REMOTE_URL)
 
-  url = f"https://github.com/matteoppet/study_tracker/releases/download/v{remote_version}/setup.exe"
+  url = f"https://github.com/matteoppet/studyarc/releases/download/v{remote_version}/setup.exe"
   installer_path = os.path.join(os.getenv("TEMP"), "setup.exe")
   urllib.request.urlretrieve(url, installer_path)
   subprocess.Popen([installer_path])
