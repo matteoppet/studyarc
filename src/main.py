@@ -5,7 +5,7 @@ from tktooltip import ToolTip
 
 from home import Home
 from weeks_log import WeeksLog
-from paths import USER_CONFIG, ICON_PATH, GIFS_PATH
+from paths import USER_CONFIG, ICON_PATH, GIFS_PATH, SETTINGS_PATH
 from style import StyleManager
 
 import webbrowser
@@ -13,6 +13,7 @@ import json
 import shutil
 import os
 import urllib.request
+import yaml
 
 class Settings(tk.Toplevel):
   class NewSubjectWindow(tk.Toplevel):
@@ -365,15 +366,17 @@ class Settings(tk.Toplevel):
 class Main(tk.Tk):
   def __init__(self):
     super().__init__()
+
+    with open(SETTINGS_PATH, "r") as readf:
+      self.SETTINGS_DATA = yaml.full_load(readf)
+
     self.minsize(1000, 500)
-    self.title("Study tracker")
+    self.title(self.SETTINGS_DATA.get("NAME_APPLICATION"))
 
     StyleManager(self)
 
     try: self.iconbitmap(ICON_PATH)
     except tk.TclError: self.iconbitmap("../assets/logo_transparent_resized.ico")
-
-    self.check_updates()
 
   def run(self):
     for widget in self.winfo_children():
@@ -403,6 +406,8 @@ class Main(tk.Tk):
     self.weeks_log_frame = WeeksLog(self.container, self)
     self.weeks_log_frame.draw_table()
 
+    self.check_updates()
+
     self.mainloop()
 
   def open_settings(self):
@@ -412,15 +417,34 @@ class Main(tk.Tk):
   def open_help(self):
     print("TODO help")
 
-  def check_updates(self):
-    def get_remote_version(url):
-      with urllib.request.urlopen(url) as response:
-          return response.read().decode().strip()
-    
-    remote_url = "https://raw.githubusercontent.com/matteoppet/study_tracker/main/data/version.txt"
-    remote_version = get_remote_version(remote_url)
+  def get_remote_version(self, url):
+    with urllib.request.urlopen(url) as response:
+      return response.read().decode().strip()
 
-    print(remote_version)
+  def check_updates(self):   
+    remote_url = "https://raw.githubusercontent.com/matteoppet/study_tracker/main/data/version.txt"
+    remote_version = self.get_remote_version(remote_url)
+    current_version_app = self.SETTINGS_DATA.get("CURRENT_VERSION")
+
+    if remote_version > current_version_app:
+      if messagebox.showinfo("Update Available", f"A new version {remote_version} is available. By clicking ok, the installation will begin."):
+        self.run_installation()
+
+  def run_installation(self):
+    import subprocess 
+    import sys
+
+    remote_url = "https://raw.githubusercontent.com/matteoppet/study_tracker/main/data/version.txt"
+    remote_version = self.get_remote_version(remote_url)
+
+    url = f"https://github.com/matteoppet/study_tracker/releases/download/v{remote_version}/setup.exe"
+    installer_path = os.path.join(os.getenv("TEMP"), "setup.exe")
+    urllib.request.urlretrieve(url, installer_path)
+    subprocess.Popen([installer_path])
+
+    messagebox.showinfo("Update completed", "Update to new version has completed, the app will shutdown and you will have to reopen it!")
+
+    sys.exit()
 
 if __name__ == "__main__":
   main = Main()
