@@ -6,7 +6,7 @@ import os
 CURRENT_VERSION = "1.2.0"
 REMOTE_URL = "https://raw.githubusercontent.com/matteoppet/study_tracker/main/data/version.txt"
 
-def get_remote_version(self, url):
+def get_remote_version(url):
   with urllib.request.urlopen(url) as response:
     return response.read().decode().strip()
 

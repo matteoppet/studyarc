@@ -7,7 +7,7 @@ from home import Home
 from weeks_log import WeeksLog
 from paths import USER_CONFIG, ICON_PATH, GIFS_PATH, SETTINGS_PATH
 from style import StyleManager
-from version import check_new_version, install_new_version
+from version import install_new_version, check_new_version
 
 import webbrowser
 import json
@@ -404,7 +404,7 @@ class Main(tk.Tk):
     self.weeks_log_frame.draw_table()
 
     if check_new_version():
-      if messagebox.showinfo("Update Available", "A new version of the app is available. By clicking ok, the installation will begin."):
+      if messagebox.showinfo("Update Available", "A new version of the app is available. Close this window to make the installation will begin."):
         if install_new_version():
           messagebox.showinfo("Update Completed", "The new update has been installed, the app will shutdown and you have to reopen it to apply the new update!")
 
@@ -416,7 +416,6 @@ class Main(tk.Tk):
 
   def open_help(self):
     print("TODO help")
-
 
   ## TODO: change the current version in setting yaml to the new version, do it in the run_build.bat file, find a way
   ## TODO: test by creating a small new version
