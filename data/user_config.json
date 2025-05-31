@@ -1,0 +1,16 @@
+{
+  "last_day": "2025 5 31",
+  "session_goal": [
+    0,
+    45
+  ],
+  "style": "xpnative",
+  "theme": "Light",
+  "font": "@Microsoft JhengHei",
+  "subjects": [
+    "Math",
+    "Physics",
+    "Arduino"
+  ],
+  "filename_gif": "default.gif"
+}

@@ -69,7 +69,9 @@ class WeeksLog(ttk.Frame):
   def __init__(self, root, controller):
     super().__init__(root)
     self.controller = controller
-    self.pack(side="left", anchor="n", padx=15, pady=15, expand=True)
+    self.pack(side="right", anchor="n", padx=15, pady=15, expand=True, fill="both")
+    self.pack_propagate(False)
+    self.configure(width=self.winfo_width()/2)
 
     self.data = []
     self.total_time_studied = 0

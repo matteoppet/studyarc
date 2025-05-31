@@ -3,11 +3,13 @@ from tkinter import ttk
 import csv
 from datetime import datetime, date, timedelta
 from tkinter import messagebox
+from tkinter.simpledialog import askstring
 import json
-from paths import DATA_CURRENT_WEEK, DATA_WEEKS_LOG, USER_CONFIG, ICON_PATH
+from paths import DATA_CURRENT_WEEK, DATA_WEEKS_LOG, USER_CONFIG, ICON_PATH, GIFS_PATH
 from style import StyleManager
 from tkcalendar import *
 from utils import time_to_seconds, seconds_to_time
+from PIL import ImageTk, Image, ImageSequence
 
 class TimerWindow(tk.Toplevel):
   def __init__(self, master, root):
@@ -18,232 +20,284 @@ class TimerWindow(tk.Toplevel):
     try: self.iconbitmap(ICON_PATH)
     except tk.TclError: self.iconbitmap("../assets/logo_transparent_resized.ico")
 
-    self.title("Study time")
+    self.title("Study Time")
     self.minsize(300, 200)
-    mouse_x = self.winfo_pointerx()
-    mouse_y = self.winfo_pointery()
-    self.geometry(f"+{mouse_x}+{mouse_y}")
+    self.resizable(False, False)
+    self.geometry(f"+{self.winfo_pointerx()}+{self.winfo_pointery()}")
     self.topmost = False
     self.attributes("-topmost", self.topmost)
     self.configure(bg=StyleManager.get_item_color("bg"))
+    self.protocol("WM_DELETE_WINDOW", lambda: self.close())
 
-    self.protocol("WM_DELETE_WINDOW", lambda: self.end_timer())
+    with open(USER_CONFIG, "r") as readf:
+      data = json.load(readf)
 
-    self.count_seconds = 0
-    self.count_minutes = 0
-    self.count_hours = 0
+    self.gif_image_path = GIFS_PATH + "/" + data["filename_gif"]
+    self.gif = Image.open(self.gif_image_path)
+    self.gif_frames = [ImageTk.PhotoImage(frame.copy().resize((340, 160), Image.LANCZOS)) for frame in ImageSequence.Iterator(self.gif)]
+    self.frame_gif = 0
 
-    self.week_days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
-    self.current_week_day = self.week_days[datetime.weekday(datetime.today())].capitalize()
+    self.total_tasks_todo = 0
+    self.total_tasks_done = 0
 
-    self.goal_study_time_selected = self.master.goal_study_time_selected.get()
-    self.goal_description = self.master.study_subject.get()
-    self.goal_formatted_time = self.goal_study_time_selected.replace("h", "").replace("m", "").replace("s", "")
+    self.reset()
 
-    self.id_timer = self.after(1000, self.update_timer)
-    
-    self.display_timer()
+  def draw_timer(self):
+    self.image_label = ttk.Label(self)
+    self.image_label.pack(side="top", anchor="center")
 
-  def display_timer(self):
-    # TITLE
-    ttk.Label(self, text="Study Timer", font=(StyleManager.get_current_font(), 18, "bold")).pack(side="top", anchor="center", pady=15, padx=15)
+    frame_timer_tasks = ttk.Frame(self)
+    frame_timer_tasks.pack(side="top", expand=True, fill="both", padx=10, pady=10)
 
-    # TIMER
-    self.timer_label = ttk.Label(self, text=f"{(self.count_hours):02d}:{(self.count_minutes):02d}:{(self.count_seconds):02d}", font=(StyleManager.get_current_font(), 16))
-    self.timer_label.pack(side="top", anchor="center")
+    timer_text = f"{(self.timer_hours):02d}:{(self.timer_minutes):02d}:{(self.timer_seconds):02d}"
+    self.timer_label = ttk.Label(frame_timer_tasks, text=timer_text, font=(StyleManager.get_current_font(), 20, "bold"))
+    self.timer_label.pack(side="left", padx=10)
 
-    # GOAL LABEL
-    ttk.Label(self, text=f"Goal: {self.goal_study_time_selected}", foreground="gray").pack(side="top", pady=3, anchor="center")
+    frame_tasks = ttk.Frame(frame_timer_tasks)
+    frame_tasks.pack(side="right", expand=True, fill="both", padx=10)
+    frame_title_and_button = ttk.Frame(frame_tasks)
+    frame_title_and_button.pack(side="top", fill="both", expand=True)
+    ttk.Label(frame_title_and_button, text="Tasks", font=(StyleManager.get_current_font(), 18, "bold")).pack(side="left")
+    ttk.Button(frame_title_and_button, text="Add", width=4, command=lambda: self.add_new_task()).pack(side="right")
 
-    ttk.Separator(self, orient="horizontal").pack(side="top", fill="x", pady=10)
+    self.tasks_listbox = tk.Listbox(frame_tasks, height=5, selectmode="single")
+    self.tasks_listbox.pack(side="top", fill="both", expand=True, pady=5)
+    self.tasks_listbox.bind("<Double-1>", lambda x: self.sign_task_done(x))
+
+    self.progressbar = ttk.Progressbar(self, orient=tk.HORIZONTAL, mode="determinate", takefocus=True, maximum=100)
+    self.progressbar.pack(side="top", padx=10, fill="x", expand=True)
+
+    ttk.Separator(self, orient="horizontal").pack(side="top", fill="x", pady=3)
 
     frame_buttons = ttk.Frame(self)
-    frame_buttons.pack(side="top", padx=10, fil="x")
+    frame_buttons.pack(side="top", fill="both", expand=True, padx=10, pady=10)
+    ttk.Button(frame_buttons, text="Close", command=lambda: self.close()).pack(side="right")
+    ttk.Button(frame_buttons, text="Reset", style="Red.TButton", command=lambda: self.reset_and_save()).pack(side="left")
+    self.button_pin_window = ttk.Button(frame_buttons, text="Pin", command=lambda: self.pin_window())
+    self.button_pin_window.pack(side="left")
 
-    button_end_timer = ttk.Button(frame_buttons, text="End timer", command=lambda: self.end_timer())
-    button_end_timer.pack(side="right")
+  def add_new_task(self):
+    new_task_name = askstring("New task", "What's is your new task?")
+    formatted_task = f"{str(self.tasks_listbox.size()+1)}. " + new_task_name 
+    self.total_tasks_todo += 1
+    self.tasks_listbox.insert(0, formatted_task)
 
-    self.button_pin_window_on_top = ttk.Button(frame_buttons, text="Pin window", command=lambda: self.pin_window())
-    self.button_pin_window_on_top.pack(side="left")
+  def sign_task_done(self, event):
+    selection = self.tasks_listbox.curselection()
+    if selection:
+      index = selection[0]
+      text = self.tasks_listbox.selection_get()
+      formatted_text = ' ✓ ' + text
 
-    self.mainloop()
+      self.tasks_listbox.delete(index)
+      self.tasks_listbox.insert(tk.END, formatted_text)
 
-  def update_timer(self):
-    if self.count_seconds != 60:
-      self.count_seconds += 1
-    else:
-      self.count_seconds = 0
-      self.count_minutes += 1
+      self.total_tasks_done += 1
+      self.update_progressbar()
 
-      if self.count_minutes == 60:
-        self.count_minutes = 0
-        self.count_hours += 1
+  def update_progressbar(self):
+    progress = (self.total_tasks_done) / self.total_tasks_todo * 100
+    self.progressbar["value"] = progress 
 
-    if self.goal_study_time_selected != "No goal":
-      formatted_goal_hours = self.goal_formatted_time.split(" ")[0]
-      formatted_goal_minutes = self.goal_formatted_time.split(" ")[1]
-      if f"{(self.count_hours):02d}" == f"{int(formatted_goal_hours):02d}" and f"{(self.count_minutes):02d}" == f"{int(formatted_goal_minutes):02d}":
-        self.goal_timer_reached()
+  def animate_gif(self):  
+    self.image_label.configure(image=self.gif_frames[self.frame_gif])
+    self.image_label.image = self.gif_frames[self.frame_gif]
 
-    self.timer_label.config(text=f"{(self.count_hours):02d}:{(self.count_minutes):02d}:{(self.count_seconds):02d}")
-    self.id_timer = self.after(1000, self.update_timer)
+    self.frame_gif = (self.frame_gif + 1) % len(self.gif_frames)
+    self.id_timer_gif = self.after(100, self.animate_gif)
 
-  def end_timer(self):
-    self.after_cancel(self.id_timer)  
+  def save_log(self):
+    def check_new_week():
+      with open(USER_CONFIG, "r") as readf:
+        data = json.load(readf)
+      
+      last_day_recorded = data["last_day"]
+      today = date.today()
+      today_string = f"{today.year} {today.month} {today.day}"
 
-    self.save_data()
+      if last_day_recorded == "":
+        data["last_day"] = today_string
+        
+        with open(USER_CONFIG, "w") as outfile:
+          outfile.write(json.dumps(data, indent=2))
 
-    self.destroy()
-    self.root.controller.deiconify()
-    self.root.controller.run()
+        return False
+      else:
+        today = date.today()
+        today_string = f"{today.year} {today.month} {today.day}"
+        date1 = datetime(int(last_day_recorded.split(" ")[0]),int(last_day_recorded.split(" ")[1]), int(last_day_recorded.split(" ")[2]))
+        date2 = datetime(int(today.year), (today.month), int(today.day))
 
-  def goal_timer_reached(self):
-    messagebox.showinfo(title="Goal study time reached", message=f"Congratulation, you have reached your study time goal!\n{self.goal_study_time_selected}")
-    
-    self.save_data()
+        week1 = date1.isocalendar()[:2]
+        week2 = date2.isocalendar()[:2]
 
-    self.destroy()
-    self.root.controller.deiconify()
-    self.root.controller.run()
+        data["last_day"] = today_string
 
-  def pin_window(self):
-    self.topmost = not self.topmost
-    self.attributes("-topmost", self.topmost)
+        with open(USER_CONFIG, "w") as outfile:
+          outfile.write(json.dumps(data, indent=2))
 
-    if self.topmost:
-      self.button_pin_window_on_top.config(text="Unpin window")
-    else:
-      self.button_pin_window_on_top.config(text="Pin window")
+        return week1 != week2
 
-  def save_data(self):
-    current_day = f"{self.current_week_day}, {datetime.today().strftime('%m-%d')}"
-    time_studied = f"{(self.count_hours):02d}h {(self.count_minutes):02d}m {(self.count_seconds):02d}s"
-    description = self.goal_description
+    def create_new_week_log():
+      week_days = []
+      total_time_studied = 0
 
-    if self.check_new_week():
-      self.create_new_week_log()
-      self.clear_last_week()
+      with open(DATA_CURRENT_WEEK, "r") as readf_current_week:
+        reader = csv.DictReader(readf_current_week)
 
-    already_inside = False
-    with open(DATA_CURRENT_WEEK, "r") as temp_data:
-      reader = csv.DictReader(temp_data)
+        for row in reader:
+          week_days.append(row)
+
+          time_to_add = row["Time"]
+          formatted_hours = int(time_to_add.replace("h", "").split(" ")[0])
+          formatted_minutes = int(time_to_add.replace("m", "").split(" ")[1])
+          formatted_seconds = int(time_to_add.replace("s", "").split(" ")[2])
+
+          total_time_studied += time_to_seconds(formatted_hours, formatted_minutes, formatted_seconds)
+        
+      with open(DATA_WEEKS_LOG, "r") as readf_weeks:
+        reader = csv.reader(readf_weeks)
+        temp_data = list(reader)
+
+      result_hours, result_minutes, result_seconds = seconds_to_time(total_time_studied)
+      text_to_write = f"{(result_hours):02d}h {(result_minutes):02d}m {(result_seconds):02d}s"
+      temp_data.insert(1, [len(temp_data), text_to_write, week_days])
+
+      with open(DATA_WEEKS_LOG, "w", newline="") as writef:
+        writer = csv.writer(writef)
+        writer.writerows(temp_data)
+
+    def clear_current_week_table():
+      fieldnames = []
+      with open(DATA_CURRENT_WEEK) as f:
+        reader = csv.DictReader(f)
+
+        fieldnames = reader.fieldnames 
+
+      f = open(DATA_CURRENT_WEEK, "w")
+      f.truncate()
+      f.close()
+
+      with open(DATA_CURRENT_WEEK, "w", newline="") as csvfile:
+        spamwriter = csv.writer(csvfile)
+
+        spamwriter.writerow(fieldnames)
+  
+    week_days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+    current_day = f"{week_days[datetime.weekday(datetime.today())].capitalize()}, {datetime.today().strftime('%m-%d')}"
+    time_studied = f"{(self.timer_hours):02d}h {(self.timer_minutes):02d}m {(self.timer_seconds):02d}s"
+    subject = self.master.study_subject.get()
+
+    if check_new_week():
+      create_new_week_log()
+      clear_current_week_table()
+
+    day_already_inside = False
+    with open(DATA_CURRENT_WEEK, "r") as tempdata:
+      reader = csv.DictReader(tempdata)
 
       for row in reader:
         if str(row["Day"]) == str(current_day):
-          already_inside = row
+          day_already_inside = row
           break
 
-    with open(DATA_CURRENT_WEEK, "r") as f:
-        reader = csv.reader(f)
-        data = list(reader)
+    with open(DATA_CURRENT_WEEK, "r") as tempdata_2:
+      reader_2 = csv.reader(tempdata_2)
+      data = list(reader_2)
 
-    if already_inside:
+    if day_already_inside:
       time_to_add = row["Time"]
       formatted_hours = int(time_to_add.replace("h", "").split(" ")[0])
       formatted_minutes = int(time_to_add.replace("m", "").split(" ")[1])
       formatted_seconds = int(time_to_add.replace("s", "").split(" ")[2])
 
       total_seconds_1 = time_to_seconds(formatted_hours, formatted_minutes) + formatted_seconds
-      total_seconds_2 = time_to_seconds(self.count_hours, self.count_minutes) + self.count_seconds
+      total_seconds_2 = time_to_seconds(self.timer_hours, self.timer_minutes) + self.timer_seconds
       total_seconds = total_seconds_1 + total_seconds_2
 
       time = seconds_to_time(total_seconds)
       text_to_write = f"{(time[0]):02d}h {(time[1]):02d}m {(time[2]):02d}s"
-      row_to_write = [current_day, text_to_write, f"{row["Description"]}, {description}"]
+      row_to_write = [current_day, text_to_write, f"{row["Description"]}, {subject}"]
 
       data.pop(1)
       data.insert(1, row_to_write)
     else:
-      row_to_write = [current_day, time_studied, description]
+      row_to_write = [current_day, time_studied, subject]
       data.insert(1, row_to_write)
 
     with open(DATA_CURRENT_WEEK, "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerows(data)
+      writer = csv.writer(f)
+      writer.writerows(data)
 
-  def check_new_week(self):
-    with open(USER_CONFIG, "r") as file:
-      data = json.load(file)
+  def update_timer(self):
+    if not self.check_goal_reached():
+      if self.timer_seconds != 59:
+        self.timer_seconds += 1
+      else:
+        self.timer_seconds = 0
+        self.timer_minutes += 1
 
-    last_day_recorded = data["last_day"]
-    
-    today = date.today()
-    today_string = f"{today.year} {today.month} {today.day}"
+        if self.timer_minutes == 60:
+          self.timer_minutes = 0
+          self.timer_hours += 1
 
-    with open(USER_CONFIG) as f:
-      data_json = json.load(f)
+      self.timer_label.config(text=f"{(self.timer_hours):02d}:{(self.timer_minutes):02d}:{(self.timer_seconds):02d}")
 
-    if last_day_recorded == "":  
-      data_json["last_day"] = today_string
-      json_object = json.dumps(data_json, indent=2)
-
-      with open(USER_CONFIG, "w") as outfile:
-        outfile.write(json_object)
-
-      return False
-
+      self.id_timer = self.after(1000, self.update_timer)
     else:
-      today = date.today()
-      today_string = f"{today.year} {today.month} {today.day}"
-      date1 = datetime(int(last_day_recorded.split(" ")[0]),int(last_day_recorded.split(" ")[1]), int(last_day_recorded.split(" ")[2]))
-      date2 = datetime(int(today.year), (today.month), int(today.day))
+      messagebox.showinfo("Study Session", "Congratulation, you have reached your time session goal!")
 
-      week1 = date1.isocalendar()[:2]
-      week2 = date2.isocalendar()[:2]
+  def check_goal_reached(self):
+    if self.goal_selected != "No goal":
+      goal_in_seconds = time_to_seconds(int(self.goal_formatted_time.split(" ")[0]), int(self.goal_formatted_time.split(" ")[1]))
+      current_time_in_seconds = time_to_seconds(self.timer_hours, self.timer_minutes)
 
-      data_json["last_day"] = today_string
-      json_object = json.dumps(data_json, indent=2)
+      if goal_in_seconds == current_time_in_seconds:
+        self.reset_and_save()
+        return True
 
-      with open(USER_CONFIG, "w") as outfile:
-        outfile.write(json_object)
+  def reset(self):
+    self.timer_hours = 0
+    self.timer_minutes = 0
+    self.timer_seconds = 0
+    self.goal_selected = self.master.goal_study_time_selected.get()
+    if self.goal_selected != "No goal": self.goal_formatted_time = self.goal_selected.replace("h", "").replace("m", "").replace("s", "")
 
-      return week1 != week2
+    for widgets in self.winfo_children():
+      widgets.destroy()
 
-  def create_new_week_log(self):
-    week_days = []
-    total_time_studied = 0
+    self.id_timer = self.after(1000, self.update_timer)
+    self.id_timer_gif = self.after(100, self.animate_gif)
 
-    with open(DATA_CURRENT_WEEK, "r") as reading_file:
-      reader = csv.DictReader(reading_file)
+    self.draw_timer()
 
-      for row in reader:
-        week_days.append(row)
+  def reset_and_save(self):
+    self.save_log()
+    self.reset()
 
-        formatted_hours = int(row["Time"].replace("h", "").split(" ")[0])
-        formatted_minutes = int(row["Time"].replace("m", "").split(" ")[1])
-        formatted_seconds = int(row["Time"].replace("s", "").split(" ")[2])
-        total_seconds = formatted_hours * 3600 + formatted_minutes * 60 + formatted_seconds
-        total_time_studied += total_seconds
-    
-    with open(DATA_WEEKS_LOG, "r") as data_weeks_log_read:
-      reader = csv.reader(data_weeks_log_read)
-      temp_data = list(reader)
+  def close(self):
+    save_and_close = True
+    if not self.check_goal_reached():
+      if messagebox.askyesno("Closing Timer", f"You have not reached your goal estabilished, are you sure you want to end the session?\n\nCurrent progress will be saved."):
+        save_and_close = True
+      else:
+        save_and_close = False
 
-    result_hours = total_time_studied // 3600
-    result_minutes = (total_time_studied % 3600) // 60
-    result_seconds = total_time_studied % 60
-    text_to_write = f"{(result_hours):02d}h {(result_minutes):02d}m {(result_seconds):02d}s"
-    temp_data.insert(1, [len(temp_data), text_to_write, week_days])
+    if save_and_close:
+      self.progressbar.stop()
+      self.save_log()
+      self.destroy()
+      self.root.controller.deiconify()
+      self.root.controller.run()
 
-    with open(DATA_WEEKS_LOG, "w", newline="") as data_to_write:
-      writer = csv.writer(data_to_write)
-      writer.writerows(temp_data)
+  def pin_window(self):
+    self.topmost = not self.topmost
+    self.attributes("-topmost", self.topmost)
 
-  def clear_last_week(self):
-    fieldnames = []
-    with open(DATA_CURRENT_WEEK) as f:
-      reader = csv.DictReader(f)
-
-      fieldnames = reader.fieldnames 
-
-    f = open(DATA_CURRENT_WEEK, "w")
-    f.truncate()
-    f.close()
-
-    with open(DATA_CURRENT_WEEK, "w", newline="") as csvfile:
-      spamwriter = csv.writer(csvfile)
-
-      spamwriter.writerow(fieldnames)
+    if self.topmost:
+      self.button_pin_window.config(text="Unpin")
+    else:
+      self.button_pin_window.config(text="Pin")
 
 class CreateNewLog(tk.Toplevel):
   def __init__(self, master):
@@ -378,8 +432,8 @@ class CreateNewLog(tk.Toplevel):
       messagebox.showerror("Empty values", "Values of hours or minutes cannot be empty")
 
     else:
-      hours = int(hours)
-      minutes = int(minutes)
+      hours = abs(int(hours))
+      minutes = abs(int(minutes))
 
       day_log = self.selected_day.get()
       time_to_seconds_new_log = time_to_seconds(hours, minutes)
@@ -463,7 +517,6 @@ class CreateNewLog(tk.Toplevel):
       self.master.draw_table()
       self.destroy()
 
-
   def start_timer(self):
     self.master.controller.withdraw()
     self.destroy()
@@ -473,7 +526,9 @@ class Home(ttk.Frame):
   def __init__(self, root, controller):
     super().__init__(root)
     self.controller = controller
-    self.pack(side="left", anchor="n", padx=15, pady=15, expand=True)
+    self.pack(side="left", anchor="n", padx=15, pady=15, expand=True, fill="both")
+    self.pack_propagate(False)
+    self.configure(width=self.winfo_width()/2)
 
     self.headers_name = []
     self.data = []
@@ -503,7 +558,7 @@ class Home(ttk.Frame):
       self,
       columns=self.headers_name,
       show="headings",
-      height=7
+      height=7,
     )
 
     # insert data to the treeview
