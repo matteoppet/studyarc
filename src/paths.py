@@ -49,8 +49,6 @@ def initialize_user_data_file(filename, headers):
           writef.write(json.dumps(data, indent=2))
 
     return user_file
-
-# IN THE FUNCTION ABOVE, IT COPIES THE FILES FROM THE FOLDER BUT THEY NO LONGER EXISTS, IT NEEDS TO CREATE THOSE FILES
   
 IS_EXECUTABLE = is_frozen()
 USER_DATA_DIR = get_user_data_dir()
@@ -73,3 +71,6 @@ else:
   SETTINGS_PATH = os.path.join(APP_DIR, "data", "settings.yaml")
   ICON_PATH = os.path.join(APP_DIR, "data", "assets", "logo.ico")
   GIFS_PATH = os.path.join(APP_DIR, "data", "assets", "gifs")
+
+
+# PUT THE SOURCEFORGE FILE IN THE GITHUB REPOSITORY

@@ -16,6 +16,8 @@ Download .exe file:
 1. Donwload the lastest '.exe' file from the [Releases](https://github.com/matteoppet/Study-Tracker/releases) page
 2. Run the executable - no installation required
 
+Or install directly from [SourceForge](https://sourceforge.net/projects/studyarc/)
+
 Install from Source:
 ```bash
 git clone https://github.com/matteoppet/Study-Tracker.git
