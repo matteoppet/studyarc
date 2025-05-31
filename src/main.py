@@ -7,6 +7,7 @@ from home import Home
 from weeks_log import WeeksLog
 from paths import USER_CONFIG, ICON_PATH, GIFS_PATH, SETTINGS_PATH
 from style import StyleManager
+from version import check_new_version, install_new_version
 
 import webbrowser
 import json
@@ -366,12 +367,8 @@ class Settings(tk.Toplevel):
 class Main(tk.Tk):
   def __init__(self):
     super().__init__()
-
-    with open(SETTINGS_PATH, "r") as readf:
-      self.SETTINGS_DATA = yaml.full_load(readf)
-
     self.minsize(1000, 500)
-    self.title(self.SETTINGS_DATA.get("NAME_APPLICATION"))
+    self.title("Study Tracker")
 
     StyleManager(self)
 
@@ -406,7 +403,10 @@ class Main(tk.Tk):
     self.weeks_log_frame = WeeksLog(self.container, self)
     self.weeks_log_frame.draw_table()
 
-    self.check_updates()
+    if check_new_version():
+      if messagebox.showinfo("Update Available", "A new version of the app is available. By clicking ok, the installation will begin."):
+        if install_new_version():
+          messagebox.showinfo("Update Completed", "The new update has been installed, the app will shutdown and you have to reopen it to apply the new update!")
 
     self.mainloop()
 
@@ -417,34 +417,9 @@ class Main(tk.Tk):
   def open_help(self):
     print("TODO help")
 
-  def get_remote_version(self, url):
-    with urllib.request.urlopen(url) as response:
-      return response.read().decode().strip()
 
-  def check_updates(self):   
-    remote_url = "https://raw.githubusercontent.com/matteoppet/study_tracker/main/data/version.txt"
-    remote_version = self.get_remote_version(remote_url)
-    current_version_app = self.SETTINGS_DATA.get("CURRENT_VERSION")
-
-    if remote_version > current_version_app:
-      if messagebox.showinfo("Update Available", f"A new version {remote_version} is available. By clicking ok, the installation will begin."):
-        self.run_installation()
-
-  def run_installation(self):
-    import subprocess 
-    import sys
-
-    remote_url = "https://raw.githubusercontent.com/matteoppet/study_tracker/main/data/version.txt"
-    remote_version = self.get_remote_version(remote_url)
-
-    url = f"https://github.com/matteoppet/study_tracker/releases/download/v{remote_version}/setup.exe"
-    installer_path = os.path.join(os.getenv("TEMP"), "setup.exe")
-    urllib.request.urlretrieve(url, installer_path)
-    subprocess.Popen([installer_path])
-
-    messagebox.showinfo("Update completed", "Update to new version has completed, the app will shutdown and you will have to reopen it!")
-
-    sys.exit()
+  ## TODO: change the current version in setting yaml to the new version, do it in the run_build.bat file, find a way
+  ## TODO: test by creating a small new version
 
 if __name__ == "__main__":
   main = Main()

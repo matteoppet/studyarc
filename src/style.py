@@ -105,13 +105,13 @@ class StyleManager:
   def get_current_font():
     with open(USER_CONFIG, "r") as readf:
       reader = json.load(readf)
-    return reader.get("font", "Arial")
+    return reader.get("font", "@Microsoft JhengHei")
   
   @staticmethod
   def get_current_style():
     with open(USER_CONFIG, "r") as readf:
       reader = json.load(readf)
-    return reader.get("style", "clam")
+    return reader.get("style", "xpnative")
 
   @staticmethod
   def get_all_themes():
