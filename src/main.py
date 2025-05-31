@@ -368,12 +368,12 @@ class Main(tk.Tk):
   def __init__(self):
     super().__init__()
     self.minsize(1000, 500)
-    self.title("Study Tracker")
+    self.title("StudyArc")
 
     StyleManager(self)
 
     try: self.iconbitmap(ICON_PATH)
-    except tk.TclError: self.iconbitmap("../assets/logo_transparent_resized.ico")
+    except tk.TclError: self.iconbitmap("../assets/logo.ico")
 
   def run(self):
     for widget in self.winfo_children():
@@ -416,9 +416,6 @@ class Main(tk.Tk):
 
   def open_help(self):
     print("TODO help")
-
-  ## TODO: change the current version in setting yaml to the new version, do it in the run_build.bat file, find a way
-  ## TODO: test by creating a small new version
 
 if __name__ == "__main__":
   main = Main()

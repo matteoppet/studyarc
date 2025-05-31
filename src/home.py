@@ -18,7 +18,7 @@ class TimerWindow(tk.Toplevel):
     self.master = master
 
     try: self.iconbitmap(ICON_PATH)
-    except tk.TclError: self.iconbitmap("../assets/logo_transparent_resized.ico")
+    except tk.TclError: self.iconbitmap("../assets/logo.ico")
 
     self.title("Study Time")
     self.minsize(300, 200)
@@ -312,7 +312,7 @@ class CreateNewLog(tk.Toplevel):
     self.resizable(False, False)
 
     try: self.iconbitmap(ICON_PATH)
-    except tk.TclError: self.iconbitmap("../assets/logo_transparent_resized.ico")
+    except tk.TclError: self.iconbitmap("../assets/logo.ico")
 
     self.container = ttk.Frame(self)
     self.container.pack(fill="both")
