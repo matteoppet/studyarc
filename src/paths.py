@@ -71,6 +71,3 @@ else:
   SETTINGS_PATH = os.path.join(APP_DIR, "data", "settings.yaml")
   ICON_PATH = os.path.join(APP_DIR, "data", "assets", "logo.ico")
   GIFS_PATH = os.path.join(APP_DIR, "data", "assets", "gifs")
-
-
-# PUT THE SOURCEFORGE FILE IN THE GITHUB REPOSITORY
