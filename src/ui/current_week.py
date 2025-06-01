@@ -377,7 +377,7 @@ class CreateNewLog(tk.Toplevel):
     button_start_timer = ttk.Button(frame_buttons, text="Start", command=lambda: self.start_timer())
     button_start_timer.pack(side="right")
     button_cancel = ttk.Button(frame_buttons, text="Cancel", command=lambda: self.destroy())
-    button_cancel.pack(side="right")
+    button_cancel.pack(side="left")
 
   def draw_old_log(self, frame):
     ttk.Label(frame, text="Forgot to log your session?", font=(StyleManager.get_current_font(), 15, "bold")).pack(side="top", anchor="w", padx=10, pady=10)

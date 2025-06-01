@@ -197,7 +197,7 @@ class Settings(tk.Toplevel):
 
     ############### APPEARANCE SECTION
     appearance_frame_content = ttk.Frame(center_wrapper)
-    appearance_frame_content.pack(side="top", pady=20, fill="x")
+    appearance_frame_content.pack(side="top", fill="x")
     ttk.Label(appearance_frame_content, text="Appearance", font=(StyleManager.get_current_font(), 14, "bold")).pack(side="top", anchor="nw")
     ttk.Separator(appearance_frame_content, orient="horizontal").pack(side="top", fill="x", pady=10)
 

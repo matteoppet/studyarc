@@ -67,6 +67,7 @@ if IS_EXECUTABLE:
   DATA_CURRENT_WEEK = initialize_user_data_file("data_current_week.csv", "Day,Time,Description")
   DATA_WEEKS_LOG = initialize_user_data_file("data_weeks_log.csv", "Week number,Total Time,Summary")
   USER_CONFIG = initialize_user_data_file("user_config.json", "")
+  PROJECTS_CSV = initialize_user_data_file("projects_list.csv", "Status,Name,Description,Useful link")
 
   GIFS_PATH = create_gifs_folder()
 
@@ -79,5 +80,6 @@ else:
   DATA_WEEKS_LOG = os.path.join(APP_DIR, "data", "data_weeks_log.csv")
   USER_CONFIG = os.path.join(APP_DIR, "data", "user_config.json")
   SETTINGS_PATH = os.path.join(APP_DIR, "data", "settings.yaml")
+  PROJECTS_CSV = os.path.join(APP_DIR, "data", "projects_list.csv")
   ICON_PATH = os.path.join(APP_DIR, "data", "assets", "logo.ico")
   GIFS_PATH = os.path.join(APP_DIR, "data", "assets", "gifs")

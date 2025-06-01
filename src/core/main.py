@@ -21,6 +21,10 @@ class Main(tk.Tk):
 
     StyleManager(self)
 
+    self.show_projects_var = tk.BooleanVar(value=True)
+    self.show_weeks_log_var = tk.BooleanVar(value=True)
+    self.show_current_week_var = tk.BooleanVar(value=True)
+
     try: self.iconbitmap(ICON_PATH)
     except tk.TclError: self.iconbitmap("../assets/logo.ico")
 
@@ -29,6 +33,12 @@ class Main(tk.Tk):
       widget.destroy()
 
     menubar = tk.Menu(self)
+
+    view_menu = tk.Menu(menubar, tearoff=0)
+    view_menu.add_checkbutton(label="Show current week", command=lambda: self.run(), variable=self.show_current_week_var)
+    view_menu.add_checkbutton(label="Show week log", command=lambda: self.run(), variable=self.show_weeks_log_var)
+    view_menu.add_checkbutton(label="Show projects", command=lambda: self.run(), variable=self.show_projects_var)
+    menubar.add_cascade(label="View", menu=view_menu)
 
     more_menu = tk.Menu(menubar, tearoff=0)
     more_menu.add_command(label="Settings", command=lambda: self.open_settings())
@@ -49,14 +59,17 @@ class Main(tk.Tk):
     frame_left_side = ttk.Frame(self.container)
     frame_left_side.pack(side="left", expand=True, fill="both", padx=15, pady=15)
 
-    self.current_week_frame = Home(frame_left_side, self)
-    self.current_week_frame.draw_table()
+    if self.show_current_week_var.get():
+      self.current_week_frame = Home(frame_left_side, self)
+      self.current_week_frame.draw_table()
 
-    self.projects_frame = Projects(frame_left_side, self)
-    self.projects_frame.draw()
+    if self.show_projects_var.get():
+      self.projects_frame = Projects(frame_left_side, self)
+      self.projects_frame.draw()
 
-    self.weeks_log_frame = WeeksLog(self.container, self)
-    self.weeks_log_frame.draw_table()
+    if self.show_weeks_log_var.get():
+      self.weeks_log_frame = WeeksLog(self.container, self)
+      self.weeks_log_frame.draw_table()
 
     if check_new_version():
       if messagebox.showinfo("Update Available", "A new version of the app is available. Close this window to make the installation will begin."):
