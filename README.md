@@ -16,7 +16,7 @@ Download .exe file:
 1. Donwload the lastest '.exe' file from the [Releases](https://github.com/matteoppet/Study-Tracker/releases) page
 2. Run the executable - no installation required
 
-Or install directly from SourceForge:
+Or install directly from SourceForge:<br>
 [![Download StudyArc](https://a.fsdn.com/con/app/sf-download-button)](https://sourceforge.net/projects/studyarc/files/latest/download)
 
 Install from Source:
