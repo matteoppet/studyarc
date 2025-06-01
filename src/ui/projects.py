@@ -90,7 +90,7 @@ class Projects(ttk.Frame):
 
     ttk.Label(title_frame, text="Projects Management", font=(StyleManager.get_current_font(), 15, "bold")).pack(side="left")
     ttk.Button(title_frame, text="New", command=lambda: self.new_project()).pack(side="right")
-    button_help = ttk.Button(title_frame, text="?", command=lambda: self.new_project(), width=5)
+    button_help = ttk.Button(title_frame, text="?", width=5)
     button_help.pack(side="right", padx=5)
     ToolTip(button_help, msg="Double left-click a row to mark the project as 'done'")
 
