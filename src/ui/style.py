@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, font
 
-from paths import USER_CONFIG
+from core.paths import USER_CONFIG
 import json
 
 THEMES = {

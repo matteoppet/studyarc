@@ -5,10 +5,10 @@ from datetime import datetime, date, timedelta
 from tkinter import messagebox
 from tkinter.simpledialog import askstring
 import json
-from paths import DATA_CURRENT_WEEK, DATA_WEEKS_LOG, USER_CONFIG, ICON_PATH, GIFS_PATH
-from style import StyleManager
+from core.paths import DATA_CURRENT_WEEK, DATA_WEEKS_LOG, USER_CONFIG, ICON_PATH, GIFS_PATH
+from ui.style import StyleManager
 from tkcalendar import *
-from utils import time_to_seconds, seconds_to_time
+from utils.utils import time_to_seconds, seconds_to_time
 from PIL import ImageTk, Image, ImageSequence
 
 class TimerWindow(tk.Toplevel):

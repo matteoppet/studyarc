@@ -3,8 +3,8 @@ from tkinter import ttk
 import csv
 import ast
 
-from style import StyleManager
-from paths import DATA_WEEKS_LOG, DATA_CURRENT_WEEK
+from ui.style import StyleManager
+from core.paths import DATA_WEEKS_LOG, DATA_CURRENT_WEEK
 
 class OpenWeek(tk.Toplevel):
   def __init__(self, root, info_week):
