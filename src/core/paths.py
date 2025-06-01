@@ -49,6 +49,14 @@ def initialize_user_data_file(filename, headers):
           writef.write(json.dumps(data, indent=2))
 
     return user_file
+
+def create_gifs_folder():
+  path_directory = os.path.join(USER_DATA_DIR, "gifs")
+  os.mkdir(path_directory)
+
+  shutil.copy2(os.path.join(APP_DIR, "assets", "gifs", "default.gif"), path_directory)
+
+  return path_directory
   
 IS_EXECUTABLE = is_frozen()
 USER_DATA_DIR = get_user_data_dir()
@@ -59,9 +67,11 @@ if IS_EXECUTABLE:
   DATA_CURRENT_WEEK = initialize_user_data_file("data_current_week.csv", "Day,Time,Description")
   DATA_WEEKS_LOG = initialize_user_data_file("data_weeks_log.csv", "Week number,Total Time,Summary")
   USER_CONFIG = initialize_user_data_file("user_config.json", "")
+
+  GIFS_PATH = create_gifs_folder()
+
   SETTINGS_PATH = os.path.join(APP_DIR, "settings.yaml")
   ICON_PATH = os.path.join(APP_DIR, "assets", "logo.ico")
-  GIFS_PATH = os.path.join(APP_DIR, "assets", "gifs")
 else: 
   APP_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 

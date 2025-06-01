@@ -525,9 +525,9 @@ class Home(ttk.Frame):
   def __init__(self, root, controller):
     super().__init__(root)
     self.controller = controller
-    self.pack(side="left", anchor="n", padx=15, pady=15, expand=True, fill="both")
+    self.pack(side="top", anchor="n", expand=True, fill="both")
     self.pack_propagate(False)
-    self.configure(width=self.winfo_width()/2)
+    self.configure(width=(self.winfo_width()/2)+100)
 
     self.headers_name = []
     self.data = []
@@ -557,7 +557,7 @@ class Home(ttk.Frame):
       self,
       columns=self.headers_name,
       show="headings",
-      height=7,
+      height=5,
     )
 
     # insert data to the treeview
@@ -608,12 +608,11 @@ class Home(ttk.Frame):
       item_day = values[1].split(", ")
 
       if item_day[1] == datetime.today().strftime('%m-%d'):
-        self.treeview.item(item_id, tags="current_day")
+        self.treeview.item(item_id, tags="current_day") 
 
     self.treeview.tag_configure("current_day", background="#cce5ff", foreground="black" if StyleManager.get_current_theme().lower() == "light" else StyleManager.get_item_color("bg"))
     
     self.treeview.pack(side="left", fill="both", expand=True)
-
     
 
   def clear_widgets(self):
