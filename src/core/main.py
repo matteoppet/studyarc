@@ -3,7 +3,7 @@ from tkinter import ttk
 from tkinter import messagebox
 from tktooltip import ToolTip
 
-from ui.home import Home
+from ui.current_week import Home
 from ui.weeks_log import WeeksLog
 from core.paths import USER_CONFIG, ICON_PATH, GIFS_PATH, SETTINGS_PATH
 from ui.style import StyleManager
