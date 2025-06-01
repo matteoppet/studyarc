@@ -63,7 +63,7 @@ if IS_EXECUTABLE:
   ICON_PATH = os.path.join(APP_DIR, "assets", "logo.ico")
   GIFS_PATH = os.path.join(APP_DIR, "assets", "gifs")
 else: 
-  APP_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+  APP_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
   DATA_CURRENT_WEEK = os.path.join(APP_DIR, "data", "data_current_week.csv")
   DATA_WEEKS_LOG = os.path.join(APP_DIR, "data", "data_weeks_log.csv")

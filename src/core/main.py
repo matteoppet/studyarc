@@ -3,11 +3,11 @@ from tkinter import ttk
 from tkinter import messagebox
 from tktooltip import ToolTip
 
-from home import Home
-from weeks_log import WeeksLog
-from paths import USER_CONFIG, ICON_PATH, GIFS_PATH, SETTINGS_PATH
-from style import StyleManager
-from version import install_new_version, check_new_version
+from ui.home import Home
+from ui.weeks_log import WeeksLog
+from core.paths import USER_CONFIG, ICON_PATH, GIFS_PATH, SETTINGS_PATH
+from ui.style import StyleManager
+from core.version import install_new_version, check_new_version
 
 import webbrowser
 import json
