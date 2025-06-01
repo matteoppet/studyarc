@@ -610,11 +610,11 @@ class Home(ttk.Frame):
       if item_day[1] == datetime.today().strftime('%m-%d'):
         self.treeview.item(item_id, tags="current_day")
 
-    # style the treeview
-    style.configure("Treeview", rowheight=25) 
     self.treeview.tag_configure("current_day", background="#cce5ff", foreground="black" if StyleManager.get_current_theme().lower() == "light" else StyleManager.get_item_color("bg"))
     
     self.treeview.pack(side="left", fill="both", expand=True)
+
+    
 
   def clear_widgets(self):
     for widgets in self.winfo_children():

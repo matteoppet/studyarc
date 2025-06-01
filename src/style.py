@@ -94,6 +94,8 @@ class StyleManager:
   def get_item_color(item):
     if StyleManager.get_current_style() == "clam":
       return THEMES[StyleManager.get_current_theme()][item]
+    else:
+      return "black" if item != "bg" else None
   
   @staticmethod
   def get_current_theme():
