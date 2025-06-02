@@ -1,5 +1,5 @@
 {
-  "last_day": "2025 6 1",
+  "last_day": "2025 6 2",
   "session_goal": [
     0,
     45
@@ -12,5 +12,5 @@
     "Physics",
     "Arduino"
   ],
-  "filename_gif": "test_2.gif"
+  "filename_gif": "default.gif"
 }

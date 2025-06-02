@@ -153,7 +153,7 @@ class TimerWindow(tk.Toplevel):
           formatted_minutes = int(time_to_add.replace("m", "").split(" ")[1])
           formatted_seconds = int(time_to_add.replace("s", "").split(" ")[2])
 
-          total_time_studied += time_to_seconds(formatted_hours, formatted_minutes, formatted_seconds)
+          total_time_studied += time_to_seconds(formatted_hours, formatted_minutes) + formatted_seconds
         
       with open(DATA_WEEKS_LOG, "r") as readf_weeks:
         reader = csv.reader(readf_weeks)
