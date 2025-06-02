@@ -249,7 +249,10 @@ class TimerWindow(tk.Toplevel):
 
   def check_goal_reached(self):
     if self.goal_selected != "No goal":
-      goal_in_seconds = time_to_seconds(int(self.goal_formatted_time.split(" ")[0]), int(self.goal_formatted_time.split(" ")[1]))
+      try:
+        goal_in_seconds = time_to_seconds(int(self.goal_formatted_time.split(" ")[0]), int(self.goal_formatted_time.split(" ")[1]))
+      except IndexError:
+        goal_in_seconds = time_to_seconds(int(self.goal_formatted_time.split(" ")[0]), 0)
       current_time_in_seconds = time_to_seconds(self.timer_hours, self.timer_minutes)
 
       if goal_in_seconds == current_time_in_seconds:
