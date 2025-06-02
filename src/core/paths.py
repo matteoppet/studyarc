@@ -52,9 +52,10 @@ def initialize_user_data_file(filename, headers):
 
 def create_gifs_folder():
   path_directory = os.path.join(USER_DATA_DIR, "gifs")
-  os.mkdir(path_directory)
-
-  shutil.copy2(os.path.join(APP_DIR, "assets", "gifs", "default.gif"), path_directory)
+  
+  if not os.path.exists(path_directory):
+    os.mkdir(path_directory)
+    shutil.copy2(os.path.join(APP_DIR, "assets", "gifs", "default.gif"), path_directory)
 
   return path_directory
   
