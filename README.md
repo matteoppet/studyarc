@@ -12,22 +12,23 @@ Minimal Study Tracker is a lightweight desktop app to help you track your study 
 - Easy-to-use graphical interface built with Tkinter
 
 ## Installation
-Download .exe file:
-1. Donwload the lastest '.exe' file from the [Releases](https://github.com/matteoppet/Study-Tracker/releases) page
-2. Run the executable - no installation required
+There are three ways where you can install:
 
-Or install directly from SourceForge:<br>
+1. Install directly from SourceForge:<br>
 [![Download StudyArc](https://a.fsdn.com/con/app/sf-download-button)](https://sourceforge.net/projects/studyarc/files/latest/download)
 
-Install from Source:
+2. Download 'setup.exe' file from the [Releases](https://github.com/matteoppet/Study-Tracker/releases) page, and run the installer.
+
+3. Install from Source:
 ```bash
-git clone https://github.com/matteoppet/Study-Tracker.git
-cd Study-Tracker
-python main.py
+git clone (this repository)
+cd studyarc
+cd src
+python -m core.main
 ```
 
-> Step 1: To uninstall the app, go to the installation folder, default will be `C:\Program Files (x86)\Study Tracker` and run `unins000.exe`
-> Step 2: Go to `C:\Users\(your user)\AppData\Roaming` and delete the folder `Study Tracker`
+## Uninstall
+To uninstall the app, simply go to the installation folder (default will be `C:\Program Files (x86)\Study Tracker`) and run `unins000.exe`
 
 ## Support the Project
 If you find this project helpful, consider donating via the link in the Settings page of the app. Your support helps maintain and improve the tool! Thank you!
