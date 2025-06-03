@@ -3,7 +3,7 @@ import subprocess
 import sys
 import os
 
-CURRENT_VERSION = "1.2.1"
+CURRENT_VERSION = "1.3.0"
 REMOTE_URL = "https://raw.githubusercontent.com/matteoppet/studyarc/main/data/version.txt"
 
 def get_remote_version(url):
