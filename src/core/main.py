@@ -36,6 +36,8 @@ class Main(tk.Tk):
 
     menubar = tk.Menu(self)
 
+    messagebox.showinfo("Update Available", f"A new version of the app is available. Please install it through one of these links: \n\n1. https://sourceforge.net/projects/studyarc/\n2. https://github.com/matteoppet/studyarc\n\nInstructions:\n1. Close this app\n2. Install new installer and run it\n3.Place the installation path with the current path")
+
     view_menu = tk.Menu(menubar, tearoff=0)
     view_menu.add_checkbutton(label="Show current week", command=lambda: self.run(), variable=self.show_current_week_var)
     view_menu.add_checkbutton(label="Show week log", command=lambda: self.run(), variable=self.show_weeks_log_var)
@@ -74,8 +76,8 @@ class Main(tk.Tk):
       self.weeks_log_frame.draw_table()
 
     if check_new_version():
-      if messagebox.showinfo("Update Available", "A new version of the app is available. Close this window to make the installation will begin."):
-        install_new_version()
+      messagebox.showinfo("Update Available", f"A new version of the app is available. Please install it through one of these links: \n\n1. https://sourceforge.net/projects/studyarc/\n2. https://github.com/matteoppet/studyarc\n\nInstructions:\n1. Close this app\n2. Install new installer and run it\n3.Place the installation path with the current path")
+      # install_new_version()
 
     self.mainloop()
 
