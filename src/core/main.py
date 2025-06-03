@@ -12,6 +12,7 @@ from ui.style import StyleManager
 from core.version import install_new_version, check_new_version
 
 import urllib.request
+import webbrowser
 
 class Main(tk.Tk):
   def __init__(self):
@@ -42,8 +43,8 @@ class Main(tk.Tk):
 
     more_menu = tk.Menu(menubar, tearoff=0)
     more_menu.add_command(label="Settings", command=lambda: self.open_settings())
-    more_menu.add_command(label="Documentation", command=lambda: self.open_help())
     more_menu.add_command(label="About", command=lambda: self.open_help())
+    more_menu.add_command(label="Report bug", command=lambda: self.open_report_bug())
     more_menu.add_separator()
     more_menu.add_command(label="Exit", command=lambda: self.destroy())
 
@@ -84,6 +85,9 @@ class Main(tk.Tk):
 
   def open_help(self):
     print("TODO help")
+
+  def open_report_bug(self):
+    webbrowser.open_new_tab("https://docs.google.com/forms/d/e/1FAIpQLSdgcSgDJqZkh0PHvuEgpQuhq07JhnfQNFKfcyhdwx-WRJWm0g/viewform?usp=sharing&ouid=107040900145910921050")
 
 if __name__ == "__main__":
   main = Main()

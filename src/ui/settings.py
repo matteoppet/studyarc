@@ -18,10 +18,7 @@ class Settings(tk.Toplevel):
       self.root = root
       self.title("Create")
       self.resizable(False, False)
-
-      mouse_x = self.winfo_pointerx()
-      mouse_y = self.winfo_pointery()
-      self.geometry(f"+{mouse_x}+{mouse_y}")
+      self.geometry(f"+{self.winfo_pointerx()}+{self.winfo_pointery()}")
 
       try: self.iconbitmap(ICON_PATH)
       except tk.TclError: self.iconbitmap("../assets/logo.ico")
