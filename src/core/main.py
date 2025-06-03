@@ -13,6 +13,7 @@ from core.version import install_new_version, check_new_version
 
 import urllib.request
 import webbrowser
+import sys
 
 class Main(tk.Tk):
   def __init__(self):
@@ -76,6 +77,7 @@ class Main(tk.Tk):
       if messagebox.showinfo("Update Available", "A new version of the app is available. Close this window to make the installation will begin."):
         if install_new_version():
           messagebox.showinfo("Update Completed", "The new update has been installed, the app will shutdown and you have to reopen it to apply the new update!")
+          sys.exit()
 
     self.mainloop()
 
