@@ -24,4 +24,6 @@ def install_new_version():
   urllib.request.urlretrieve(url, installer_path)
   subprocess.Popen([installer_path])
 
+  os._exit(0)
+
   return True

@@ -77,7 +77,6 @@ class Main(tk.Tk):
       if messagebox.showinfo("Update Available", "A new version of the app is available. Close this window to make the installation will begin."):
         if install_new_version():
           messagebox.showinfo("Update Completed", "The new update has been installed, the app will shutdown and you have to reopen it to apply the new update!")
-          sys.exit()
 
     self.mainloop()
 
