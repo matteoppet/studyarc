@@ -9,7 +9,7 @@ from ui.projects import Projects
 from ui.settings import Settings
 from core.paths import USER_CONFIG, ICON_PATH, GIFS_PATH, SETTINGS_PATH
 from ui.style import StyleManager
-from core.version import install_new_version, check_new_version
+from core.version import install_new_version, check_new_version, REMOTE_URL, CURRENT_VERSION, get_remote_version
 
 import urllib.request
 import webbrowser
@@ -35,8 +35,6 @@ class Main(tk.Tk):
       widget.destroy()
 
     menubar = tk.Menu(self)
-
-    messagebox.showinfo("Update Available", f"A new version of the app is available. Please install it through one of these links: \n\n1. https://sourceforge.net/projects/studyarc/\n2. https://github.com/matteoppet/studyarc\n\nInstructions:\n1. Close this app\n2. Install new installer and run it\n3.Place the installation path with the current path")
 
     view_menu = tk.Menu(menubar, tearoff=0)
     view_menu.add_checkbutton(label="Show current week", command=lambda: self.run(), variable=self.show_current_week_var)
@@ -76,8 +74,8 @@ class Main(tk.Tk):
       self.weeks_log_frame.draw_table()
 
     if check_new_version():
-      messagebox.showinfo("Update Available", f"A new version of the app is available. Please install it through one of these links: \n\n1. https://sourceforge.net/projects/studyarc/\n2. https://github.com/matteoppet/studyarc\n\nInstructions:\n1. Close this app\n2. Install new installer and run it\n3.Place the installation path with the current path")
-      # install_new_version()
+      if messagebox.showinfo("Update Available", f"A new version of this app is available!\n\nv{CURRENT_VERSION} -> v{get_remote_version(REMOTE_URL)}\n\nPlease click ok for the installation to begin. The app will close and reopen automatically after the update."):
+        install_new_version(self)
 
     self.mainloop()
 
