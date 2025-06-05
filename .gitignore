@@ -2,7 +2,7 @@
 /src/*json
 /src/*.yaml
 /env
-/notes.txt
+/notes_new_release.txt
 src/__pycache__
 src/core/__pycache__
 src/ui/__pycache__

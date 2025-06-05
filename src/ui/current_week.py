@@ -11,6 +11,9 @@ from tkcalendar import *
 from utils.utils import time_to_seconds, seconds_to_time
 from PIL import ImageTk, Image, ImageSequence
 
+FORMAT_TIME_STRING = "%h:%m:%s"
+FORMAT_DAY_STRING = "%Y-%m-%d"
+
 class TimerWindow(tk.Toplevel):
   def __init__(self, master, root):
     super().__init__()
@@ -147,20 +150,15 @@ class TimerWindow(tk.Toplevel):
 
         for row in reader:
           week_days.append(row)
-
           time_to_add = row["Time"]
-          formatted_hours = int(time_to_add.replace("h", "").split(" ")[0])
-          formatted_minutes = int(time_to_add.replace("m", "").split(" ")[1])
-          formatted_seconds = int(time_to_add.replace("s", "").split(" ")[2])
-
-          total_time_studied += time_to_seconds(formatted_hours, formatted_minutes) + formatted_seconds
+          total_time_studied += time_to_add
         
       with open(DATA_WEEKS_LOG, "r") as readf_weeks:
         reader = csv.reader(readf_weeks)
         temp_data = list(reader)
 
-      result_hours, result_minutes, result_seconds = seconds_to_time(total_time_studied)
-      text_to_write = f"{(result_hours):02d}h {(result_minutes):02d}m {(result_seconds):02d}s"
+      data_time = seconds_to_time(total_time_studied)
+      text_to_write = FORMAT_TIME_STRING.replace("%h", f"{data_time[0]:02d}").replace("%m", f"{data_time[1]:02d}").replace("%s", f"{data_time[2]:02d}")
       temp_data.insert(1, [len(temp_data), text_to_write, week_days])
 
       with open(DATA_WEEKS_LOG, "w", newline="") as writef:
@@ -184,8 +182,8 @@ class TimerWindow(tk.Toplevel):
         spamwriter.writerow(fieldnames)
   
     week_days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
-    current_day = f"{week_days[datetime.weekday(datetime.today())].capitalize()}, {datetime.today().strftime('%m-%d')}"
-    time_studied = f"{(self.timer_hours):02d}h {(self.timer_minutes):02d}m {(self.timer_seconds):02d}s"
+    current_day = f"{week_days[datetime.weekday(datetime.today())].capitalize()}, {datetime.today().strftime(FORMAT_DAY_STRING)}"
+    time_studied = time_to_seconds(self.timer_hours, self.timer_minutes) + self.timer_seconds
     subject = self.master.study_subject.get()
 
     if check_new_week():
@@ -207,17 +205,8 @@ class TimerWindow(tk.Toplevel):
 
     if day_already_inside:
       time_to_add = row["Time"]
-      formatted_hours = int(time_to_add.replace("h", "").split(" ")[0])
-      formatted_minutes = int(time_to_add.replace("m", "").split(" ")[1])
-      formatted_seconds = int(time_to_add.replace("s", "").split(" ")[2])
-
-      total_seconds_1 = time_to_seconds(formatted_hours, formatted_minutes) + formatted_seconds
-      total_seconds_2 = time_to_seconds(self.timer_hours, self.timer_minutes) + self.timer_seconds
-      total_seconds = total_seconds_1 + total_seconds_2
-
-      time = seconds_to_time(total_seconds)
-      text_to_write = f"{(time[0]):02d}h {(time[1]):02d}m {(time[2]):02d}s"
-      row_to_write = [current_day, text_to_write, f"{row["Description"]}, {subject}"]
+      total_seconds = int(time_to_add) + int(time_studied)
+      row_to_write = [current_day, total_seconds, f"{row["Description"]}, {subject.capitalize()}"]
 
       data.pop(1)
       data.insert(1, row_to_write)
@@ -553,7 +542,7 @@ class Home(ttk.Frame):
     current_day_frame = ttk.Frame(self)
     current_day_frame.pack(fill="x", pady=10)
     ttk.Label(current_day_frame, text=f"Today is:").pack(side="left")
-    ttk.Label(current_day_frame, text=datetime.today().strftime('%Y-%m-%d'), font=(StyleManager.get_current_font(), 9, "bold")).pack(side="left")
+    ttk.Label(current_day_frame, text=datetime.today().strftime(FORMAT_DAY_STRING), font=(StyleManager.get_current_font(), 9, "bold")).pack(side="left")
 
     self.headers_name.insert(0, "Goal")
     self.treeview = ttk.Treeview(
@@ -578,27 +567,22 @@ class Home(ttk.Frame):
 
       for key, value in row_data.items():
         if key == "Time":
-          formatted_hours = int(value.replace("h", "").split(" ")[0])
-          formatted_minutes = int(value.replace("m", "").split(" ")[1])
-          formatted_seconds = int(value.replace("s", "").split(" ")[2])
-          total_time_studied = time_to_seconds(formatted_hours, formatted_minutes) + formatted_seconds
+          total_time_studied = value
 
           with open(USER_CONFIG, "r") as readf:
             reader = json.load(readf)
             readf.close()
 
           goal = reader["session_goal"]
-          goal_to_seconds = goal[0] * 3600 + goal[1] * 60
+          goal_to_seconds = time_to_seconds(int(goal[0]), int(goal[1]))
 
-          if total_time_studied >= goal_to_seconds:
-            values_to_insert.insert(0, "👍")
-          else:
-            values_to_insert.insert(0, "👎")
+          if int(total_time_studied) >= int(goal_to_seconds): values_to_insert.insert(0, "👍")
+          else: values_to_insert.insert(0, "👎")
 
-          values_to_insert.append(value)
-          
-        else:
-          values_to_insert.append(value)
+          data_seconds_in_time = seconds_to_time(int(total_time_studied))
+          value = FORMAT_TIME_STRING.replace("%h", f"{data_seconds_in_time[0]:02d}").replace("%m", f"{data_seconds_in_time[1]:02d}").replace("%s", f"{data_seconds_in_time[2]:02d}")
+
+        values_to_insert.append(value)
 
       self.treeview.insert(
         "",
@@ -610,7 +594,7 @@ class Home(ttk.Frame):
       values = self.treeview.item(item_id, "values")
       item_day = values[1].split(", ")
 
-      if item_day[1] == datetime.today().strftime('%m-%d'):
+      if item_day[1] == datetime.today().strftime(FORMAT_DAY_STRING):
         self.treeview.item(item_id, tags="current_day") 
 
     self.treeview.tag_configure("current_day", background="#cce5ff", foreground="black" if StyleManager.get_current_theme().lower() == "light" else StyleManager.get_item_color("bg"))
