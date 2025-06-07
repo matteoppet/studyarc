@@ -1,34 +1,49 @@
-# Study Tracker
-
-Minimal Study Tracker is a lightweight desktop app to help you track your study time and visualize your weekly progress. Built using Python and Tkinter, this app provides a simple and distraction-free way to stay productive.
-
-## Preview
-![App Screenshot](screenshot_1.png)
+# StudyArc
+**StudyArc** is a minimal study tracker desktop application designed to help monitor your study time, track your working-on or to-do projects -- with a task manager 
+integrated in each project -- and also the possibility to visualize weekly progress.  
+Built with **Python** and **Tkinter**, it offers a distraction-free interface to support focused and consisent productivity.
 
 ## Features
-- Track your daily study time
-- View study statistics for the past week
-- Timer window can be pinned to be "on top" of everything
-- Easy-to-use graphical interface built with Tkinter
+- Track daily study time
+- View weekly study statistics
+- Projects and Tasks management
+- Timer window can stay always-on-top
+- Simple and intuitive interface using Tkinter
+- No internet needed
+
+## Preview 
+![App Dashboard](screenshot_1.png)
 
 ## Installation
-There are three ways where you can install:
 
-1. Install directly from SourceForge:<br>
+### 1. Binary Installer
+- Download `setup.exe` from the [Releases](https://github.com/matteoppet/Study-Tracker/releases) page  
+- Run the installer
+- Launch from Start Menu or Desktop
+
+### 2. SourceForge
 [![Download StudyArc](https://a.fsdn.com/con/app/sf-download-button)](https://sourceforge.net/projects/studyarc/files/latest/download)
 
-2. Download 'setup.exe' file from the [Releases](https://github.com/matteoppet/Study-Tracker/releases) page, and run the installer.
-
-3. Install from Source:
+### 3. Run from Source
 ```bash
-git clone (this repository)
-cd studyarc
-cd src
+git clone https://github.com/matteoppet/studyarc.git
+pip install -r requirements.txt
+cd studyarc/src
 python -m core.main
 ```
 
 ## Uninstall
-To uninstall the app, simply go to the installation folder (default will be `C:\Program Files (x86)\Study Tracker`) and run `unins000.exe`
+Navigate to the install directory (default: `C:\Program Files (x86)\StudyArc`) and run `unins000.exe`.  
+If you want to delete also the data files, navigate to `%appdata%` and delete the `StudyArc` directory
 
-## Support the Project
-If you find this project helpful, consider donating via the link in the Settings page of the app. Your support helps maintain and improve the tool! Thank you!
+## Contributing
+Open an issue or submit a pull request. Bug reports, feature ideas, and code improvements are all welcome.
+
+## Support
+If this tool helps you:
+- Star the repository
+- Share it with others
+- Prove feedback via issues or discussions  
+<br>Thank you to everyone!  
+
+Donations are optional and can be made through the Settings page of the app.
