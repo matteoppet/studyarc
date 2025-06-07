@@ -1,2 +1,2 @@
-Status,Name,Description,Useful link
-Not started,Last test,Hello,['https://www.google.co.uk/']
+ID,Status,Name,Description,Link,Tasks
+8,Not Started,Study Tracker,"A lightweight, minimal study tracker",[],"{3: {'status': False, 'name': 'Test 3'}, 2: {'status': False, 'name': 'Test 2'}, 4: {'status': False, 'name': 'Test 4'}, 1: {'status': False, 'name': 'Test 1'}}"

@@ -12,6 +12,168 @@ import webbrowser
 
 from tktooltip import ToolTip
 
+class Tasks(tk.Frame):
+  def __init__(self, root: tk.Toplevel, data_item: dict, frame: tk.Frame):
+    self.root = root
+    self.data_item = data_item
+    self.frame = frame
+
+    self.root.protocol("WM_DELETE_WINDOW", lambda: self.save_tasks())
+
+    self.changes = False
+    self.tasks = {}
+    self.capped_ID = 0
+
+    self.draw()
+    self.load_tasks()
+
+  def draw(self):
+    frame_title = ttk.Frame(self.frame)
+    frame_title.pack(side="top", fill="x")
+    tk.Label(frame_title, text="Tasks Manager", anchor="w", font=(StyleManager.get_current_font(), 13, "bold")).pack(side="top", fill="x", anchor="w", pady=5)
+
+    ttk.Separator(self.frame, orient="horizontal").pack(side="top", fill="x", pady=(0,5))
+
+    frame_content = ttk.Frame(self.frame)
+    frame_content.pack(side="top", fill="both", expand=True)
+
+    frame_list_tasks = ttk.Frame(frame_content)
+    frame_list_tasks.pack(side="left", padx=5, pady=5, expand=True, fill="both")
+
+    self.list_tasks_todo = tk.Listbox(frame_list_tasks)
+    self.list_tasks_todo.pack(side="top", fill="both", expand=True)
+
+    frame_buttons = ttk.Frame(frame_content)
+    frame_buttons.pack(side="right", padx=5, pady=5, fill="both")
+    
+    ttk.Button(frame_buttons, text="Done/Undone", command=lambda: self.task_status_change()).pack(side="top")
+
+    ttk.Separator(frame_buttons, orient="horizontal").pack(side="top", fill="x", pady=10)
+
+    ttk.Button(frame_buttons, text="New", command=lambda: self.create_task()).pack(side="top")
+    ttk.Button(frame_buttons, text="Edit", command=lambda: self.edit_task()).pack(side="top", pady=5)
+    ttk.Button(frame_buttons, text="Delete", command=lambda: self.delete_task()).pack(side="top")
+
+    ttk.Separator(frame_buttons, orient="horizontal").pack(side="top", fill="x", pady=10)
+
+    ttk.Button(frame_buttons, text="Move up", command=lambda: self.move_task(-1)).pack(side="top")
+    ttk.Button(frame_buttons, text="Move down", command=lambda: self.move_task(1)).pack(side="top", pady=5)
+
+  def create_task(self):
+    self.changes = True
+    name_new_task = askstring("New task", "What will be your new task?")
+
+    if name_new_task == "":
+      messagebox.showerror("Error new task", "The name of a task cannot be empty.")
+      self.root.tkraise()
+      return
+    
+    self.capped_ID += 1
+    self.tasks[self.capped_ID] = {"status": False, "name": name_new_task}
+    self.list_tasks_todo.insert(self.list_tasks_todo.size()-1, f"{self.capped_ID}: {name_new_task}")
+
+  def load_tasks(self):
+    data = ast.literal_eval(str(self.data_item[-1]))
+    id_tasks_completed = []
+    id_tasks_todo = []
+
+    for ID, task in data.items():
+      if task["status"]:
+        id_tasks_completed.append(ID)
+      else:
+        id_tasks_todo.append(ID)
+
+    for id_task in id_tasks_todo:
+      self.list_tasks_todo.insert(tk.END, f"{id_task}: {data[id_task]['name']}")
+      self.tasks[int(id_task)] = data[id_task]
+
+    self.list_tasks_todo.insert(tk.END, "----------")
+
+    for id_task in id_tasks_completed:
+      self.list_tasks_todo.insert(tk.END, f"{id_task}: {data[id_task]['name']}")
+      self.list_tasks_todo.itemconfig(tk.END, {"fg": "green"})
+      self.tasks[int(id_task)] = data[id_task]
+
+  def task_status_change(self):
+    try:
+      if len(self.list_tasks_todo.curselection()) != 0:
+        self.changes = True
+        item = self.list_tasks_todo.curselection()[0]
+        ID, name = self.list_tasks_todo.get(item).split(": ")
+        ID = int(ID)
+
+        self.tasks[ID]["status"] = not bool(self.tasks[ID]["status"])
+
+        self.list_tasks_todo.delete(item)
+
+        if self.tasks[ID]["status"]:
+          self.list_tasks_todo.insert(tk.END, f"{ID}: {name}")
+          self.list_tasks_todo.itemconfig(self.list_tasks_todo.size()-1, {"fg": "green"})
+        else:
+          self.list_tasks_todo.insert(0, f"{ID}: {name}")
+          self.list_tasks_todo.itemconfig(0, {"fg": "black"})
+    except ValueError:
+      pass
+
+  def delete_task(self):
+    try:
+      if len(self.list_tasks_todo.curselection()) != 0:
+        self.changes = True
+        item = self.list_tasks_todo.curselection()[0]
+        ID, name = self.list_tasks_todo.get(item).split(": ")
+
+        self.tasks.pop(int(ID))
+        self.list_tasks_todo.delete(item)
+        messagebox.showinfo("Task deleted", "The task has deleted successfully.")
+    except ValueError:
+      pass
+
+  def edit_task(self):
+    try:
+      if len(self.list_tasks_todo.curselection()) != 0:
+        self.changes = True
+        item = self.list_tasks_todo.curselection()[0]
+        ID, name = self.list_tasks_todo.get(item).split(": ")
+
+        new_name = askstring("Edit task", "Change name of the task:", initialvalue=name)
+        self.tasks[int(ID)]["name"] = new_name
+        
+        self.list_tasks_todo.delete(item)
+        self.list_tasks_todo.insert(item, f"{ID}: {new_name}")
+        self.list_tasks_todo.itemconfig(item, {"fg": "green" if self.tasks[int(ID)]["status"] else "black"})
+
+    except ValueError:
+      pass
+
+  def move_task(self, direction):
+    try:
+      if len(self.list_tasks_todo.curselection()) != 0:
+        self.changes = True
+        item = self.list_tasks_todo.curselection()[0]
+        ID, name = self.list_tasks_todo.get(item).split(": ")
+
+        self.list_tasks_todo.delete(item)
+        self.list_tasks_todo.insert(item+direction, f"{ID}: {name}")
+        self.list_tasks_todo.itemconfig(item+direction, {"fg": "green" if self.tasks[int(ID)]["status"] else "black"})
+
+        id_keys = list(self.tasks.keys())
+
+        index = id_keys.index(int(ID))
+        id_keys.remove(int(ID))
+        id_keys.insert(index+direction, int(ID))
+        self.tasks = {key: self.tasks[key] for key in id_keys}
+
+    except ValueError:
+      pass
+
+  def save_tasks(self):
+    if self.changes:
+      ID_item = self.data_item[0]
+      self.root.root.data[int(ID_item)][-1] = self.tasks
+      self.root.root.save_data()
+
+    self.root.destroy()
+
 class OverviewProject(tk.Toplevel):
   def __init__(self, root, action):
     super().__init__()
@@ -21,7 +183,7 @@ class OverviewProject(tk.Toplevel):
 
     self.title("Create Project" if self.action == "create" else "Overview project")
     self.minsize(400, 200)
-    self.resizable(True, False)
+    self.resizable(True, True)
     self.geometry(f"+{self.winfo_pointerx()}+{self.winfo_pointery()}")
 
     self.project_name_stringvar = tk.StringVar()
@@ -31,25 +193,40 @@ class OverviewProject(tk.Toplevel):
 
     if self.action == "open":
       item = self.root.treeview.selection()[0]
-      values = self.root.treeview.item(item, "values")
+      tags = self.root.treeview.item(item, "tags")
+      ID = int(tags[0])
 
-      self.project_status.set(values[0])
-      self.project_name_stringvar.set(values[1])
-      self.project_description_stringvar.set(values[2])
+      self.project_status.set(self.root.data[ID][1])
+      self.project_name_stringvar.set(self.root.data[ID][2])
+      self.project_description_stringvar.set(self.root.data[ID][3])
 
-      for link in ast.literal_eval(values[3]):
+      for link in ast.literal_eval(self.root.data[ID][4]):
         self.project_list_of_links.append(link)
 
-    self.draw()
+      self.notebook = ttk.Notebook(self)
+      self.notebook.pack(expand=True, fill="both")
 
-  def draw(self):
+      frame_content = ttk.Frame(self.notebook)
+      frame_content.pack(fill="both", expand=True)
+      frame_tasks = ttk.Frame(self.notebook)
+      frame_tasks.pack(fill="both", expand=True)
+
+      self.notebook.add(frame_content, text="Overview")
+      self.notebook.add(frame_tasks, text="Tasks")
+
+      self.draw(frame_content)
+      Tasks(self, self.root.data[ID], frame_tasks)
+    else:
+      frame_content = ttk.Frame(self)
+      frame_content.pack(side="top", expand=True, fill="both", padx=10, pady=10)
+
+      self.draw(frame_content)
+
+  def draw(self, frame_content):
     WIDTH_LABELS_LEFT = 20
 
-    frame_content = ttk.Frame(self)
-    frame_content.pack(side="top", expand=True, fill="both", padx=10, pady=10)
-
     frame_project_name = ttk.Frame(frame_content)
-    frame_project_name.pack(side="top", fill="x")
+    frame_project_name.pack(side="top", fill="x", pady=(10,0))
     ttk.Label(frame_project_name, text="Project name:", width=WIDTH_LABELS_LEFT).pack(side="left")
     if self.action == "create":
       ttk.Entry(frame_project_name, textvariable=self.project_name_stringvar).pack(side="left", fill="x", expand=True)
@@ -97,18 +274,20 @@ class OverviewProject(tk.Toplevel):
     ttk.Separator(frame_content, orient="horizontal").pack(side="top", fill="x", pady=10, anchor="nw")
 
     frame_buttons = ttk.Frame(frame_content)
-    frame_buttons.pack(side="top", fill="x", expand=True)
+    frame_buttons.pack(side="top", fill="x")
     if self.action == "open":
-      ttk.Button(frame_buttons, text="Close", command=lambda: self.destroy()).pack(side="right")
+      ttk.Button(frame_buttons, text="Close", command=lambda: self.destroy()).pack(side="right", anchor="n")
     else:
-      ttk.Button(frame_buttons, text="Create", command=lambda: self.create()).pack(side="right")
-      ttk.Button(frame_buttons, text="Cancel", command=lambda: self.destroy()).pack(side="left")
+      ttk.Button(frame_buttons, text="Create", command=lambda: self.create()).pack(side="right", anchor="n")
+      ttk.Button(frame_buttons, text="Cancel", command=lambda: self.destroy()).pack(side="left", anchor="n")
 
   def create(self):
+    ID = self.root.ID_TO_CONTINUE+1
     status = self.project_status.get()
     name = self.project_name_stringvar.get()
     description = self.project_description_stringvar.get()
     links = str(self.project_list_of_links)
+    tasks = "{}"
 
     if name == "":
       messagebox.showerror("Missing values", "A name for the project must exists.")
@@ -118,7 +297,7 @@ class OverviewProject(tk.Toplevel):
       with open(PROJECTS_CSV, "r") as readf:
         reader = csv.DictReader(readf)
 
-        rows_to_write.append({"Status": status, "Name": name, "Description": description, "Useful link": links})
+        rows_to_write.append({"ID": ID, "Status": status, "Name": name, "Description": description, "Link": links, "Tasks": tasks})
         for row in reader:
           rows_to_write.append(row)
 
@@ -127,9 +306,14 @@ class OverviewProject(tk.Toplevel):
         writer.writeheader()
         writer.writerows(rows_to_write)
 
-      self.root.treeview.insert("", 0, values=[status,name,description,links])
+      self.root.treeview.insert("", 0, values=[ID,status,name,description], tags=(ID, status))
+
+      self.root.data[int(ID)] = [ID,status,name,description,links,tasks]
+      self.root.ID_TO_CONTINUE += 1
 
       messagebox.showinfo("New project created", "The new project has been created successfully.")
+      self.root.save_data()
+      self.destroy()
 
   def open_insert_link(self):
     new_link = askstring("Insert link", "Insert a link useful for your project!")
@@ -148,6 +332,30 @@ class Projects(ttk.Frame):
     self.pack_propagate(False)
     self.configure(width=(self.winfo_width()/2)+100)
 
+    self.ID_TO_CONTINUE = 0
+
+    self.headers = None
+    self.data = {}
+    self.load_data()
+
+  def load_data(self):
+    with open(PROJECTS_CSV, "r") as readf:
+      reader = csv.DictReader(readf)
+      self.headers = reader.fieldnames
+
+      for row in reader:
+        current_row_data = []
+
+        for key, value in row.items():
+          if key == "ID":
+            if int(value) > self.ID_TO_CONTINUE: 
+              self.ID_TO_CONTINUE = int(value)
+
+          if key != ["Links", "Tasks"]:
+            current_row_data.append(value)
+
+        self.data[self.ID_TO_CONTINUE] = current_row_data
+
   def draw(self):
     title_frame = ttk.Frame(self)
     title_frame.pack(fill="x", pady=20)
@@ -158,27 +366,26 @@ class Projects(ttk.Frame):
     button_help.pack(side="right", padx=5)
     ToolTip(button_help, msg="Double left-click a row to mark the project as 'done'")
 
-    self.headers_name = ["Status", "Name", "Description", "Useful link"]
     self.treeview = ttk.Treeview(
       self,
-      columns=self.headers_name,
+      columns=self.headers[0:len(self.headers)-2],
       show="headings",
       selectmode='browse',
     )
 
-    for heading in self.headers_name:
+    for heading in self.headers[0:len(self.headers)-2]:
+
       self.treeview.heading(heading, text=heading)
 
       if heading.lower() == "status":
         self.treeview.column(heading, width=100)
+      elif heading.lower() == "id":
+        self.treeview.column(heading, width=5)
       else:
         self.treeview.column(heading, width=140)
 
-    with open(PROJECTS_CSV, "r") as readf:
-      reader = csv.DictReader(readf)
-
-      for row in reader:
-        self.treeview.insert("", tk.END, values=list(row.values()), tags=row["Status"])
+    for key in self.data.keys():
+      self.treeview.insert("", tk.END, values=self.data[key], tags=[self.data[key][0], self.data[key][1]])
 
     self.collapse_menu = tk.Menu(self, tearoff=0)
     self.collapse_menu.add_command(label="Open", command=lambda: OverviewProject(self, "open"))
@@ -192,17 +399,18 @@ class Projects(ttk.Frame):
   def mark_project_as_done(self, event):
     item = self.treeview.selection()[0]
     values = list(self.treeview.item(item, "values"))
+    tags = self.treeview.item(item, "tags")
 
     if self.treeview.tag_has("Done", item) == 0:
       values[0] = "Done"
 
       self.treeview.move(item, "", tk.END)
-      self.treeview.item(item, tags="Done", values=values)
+      self.treeview.item(item, tags=[tags[0], "Done"], values=values)
     else:
       values[0] = "Not started"
 
       self.treeview.move(item, "", 0)
-      self.treeview.item(item, tags="Not started", values=values)
+      self.treeview.item(item, tags=[tags[0], "Not started"], values=values)
 
     self.save_data()
 
@@ -214,9 +422,9 @@ class Projects(ttk.Frame):
 
     with open(PROJECTS_CSV, "w", newline="") as writef:
       writer = csv.writer(writef)
-      writer.writerow(["Status","Name","Description","Useful link"])
+      writer.writerow(self.headers)
 
-      writer.writerows(all_values)
+      writer.writerows(self.data.values())
 
   def new_project(self):
     OverviewProject(self, "create")
@@ -234,8 +442,10 @@ class Projects(ttk.Frame):
   def delete_project(self):
     item = self.treeview.selection()[0]
     title = self.treeview.item(item, "values")[1]
+    ID = self.treeview.item(item, "tags")[0]
 
     if messagebox.askyesno("Delete project", f"Are you sure to delete this project?\n\nTitle project: {title}\n\nThis action will not be reversible."):
       self.treeview.delete(item)
+      self.data.pop(int(ID))
       self.save_data()
       messagebox.showinfo("Project deletion", "Project deleted successfully!")

@@ -562,6 +562,7 @@ class Home(ttk.Frame):
         self.treeview.column(heading, width=50, anchor='center')
       else:
         self.treeview.column(heading, width=140, anchor='w')
+        
     for row_data in self.data:
       values_to_insert = []
 
