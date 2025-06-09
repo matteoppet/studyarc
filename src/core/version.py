@@ -5,7 +5,7 @@ import os
 import psutil
 import time
 
-CURRENT_VERSION = "1.3.0"
+CURRENT_VERSION = "1.4.0"
 REMOTE_URL = "https://raw.githubusercontent.com/matteoppet/studyarc/main/data/version.txt"
 
 def get_remote_version(url):

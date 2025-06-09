@@ -68,7 +68,7 @@ if IS_EXECUTABLE:
   DATA_CURRENT_WEEK = initialize_user_data_file("data_current_week.csv", "Day,Time,Description")
   DATA_WEEKS_LOG = initialize_user_data_file("data_weeks_log.csv", "Week number,Total Time,Summary")
   USER_CONFIG = initialize_user_data_file("user_config.json", "")
-  PROJECTS_CSV = initialize_user_data_file("projects_list.csv", "Status,Name,Description,Useful link")
+  PROJECTS_CSV = initialize_user_data_file("projects_list.csv", "ID,Status,Name,Description,Time,Link,Tasks")
 
   GIFS_PATH = create_gifs_folder()
 

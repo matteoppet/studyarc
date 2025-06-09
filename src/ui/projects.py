@@ -294,6 +294,7 @@ class OverviewProject(tk.Toplevel):
     status = self.project_status.get()
     name = self.project_name_stringvar.get()
     description = self.project_description_stringvar.get()
+    time = 0
     links = str(self.project_list_of_links)
     tasks = "{}"
 
@@ -305,7 +306,7 @@ class OverviewProject(tk.Toplevel):
       with open(PROJECTS_CSV, "r") as readf:
         reader = csv.DictReader(readf)
 
-        rows_to_write.append({"ID": ID, "Status": status, "Name": name, "Description": description, "Link": links, "Tasks": tasks})
+        rows_to_write.append({"ID": ID, "Status": status, "Name": name, "Description": description, "Time": 0, "Link": links, "Tasks": tasks})
         for row in reader:
           rows_to_write.append(row)
 
@@ -316,7 +317,7 @@ class OverviewProject(tk.Toplevel):
 
       self.root.treeview.insert("", 0, values=[ID,status,name,description], tags=(ID, status))
 
-      self.root.data[int(ID)] = [ID,status,name,description,links,tasks]
+      self.root.data[int(ID)] = [ID,status,name,description,time,links,tasks]
       self.root.ID_TO_CONTINUE += 1
 
       messagebox.showinfo("New project created", "The new project has been created successfully.")
