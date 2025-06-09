@@ -7,9 +7,9 @@ import ast
 
 from ui.style import StyleManager
 from core.paths import PROJECTS_CSV
+from utils.utils import seconds_to_time
 
 import webbrowser
-
 from tktooltip import ToolTip
 
 class Tasks(tk.Frame):
@@ -188,6 +188,7 @@ class OverviewProject(tk.Toplevel):
 
     self.project_name_stringvar = tk.StringVar()
     self.project_description_stringvar = tk.StringVar()
+    self.project_time_studied_stringvar = tk.StringVar()
     self.project_list_of_links = []
     self.project_status = tk.StringVar(value="Not Started")
 
@@ -199,8 +200,9 @@ class OverviewProject(tk.Toplevel):
       self.project_status.set(self.root.data[ID][1])
       self.project_name_stringvar.set(self.root.data[ID][2])
       self.project_description_stringvar.set(self.root.data[ID][3])
+      self.project_time_studied_stringvar.set(f"{seconds_to_time(int(self.root.data[ID][4]))[0]:02d}:{seconds_to_time(int(self.root.data[ID][4]))[1]:02d}:{seconds_to_time(int(self.root.data[ID][4]))[2]:02d}")
 
-      for link in ast.literal_eval(self.root.data[ID][4]):
+      for link in ast.literal_eval(self.root.data[ID][5]):
         self.project_list_of_links.append(link)
 
       self.notebook = ttk.Notebook(self)
@@ -242,6 +244,12 @@ class OverviewProject(tk.Toplevel):
       ttk.Entry(frame_project_description, textvariable=self.project_description_stringvar).pack(side="left", fill="x", expand=True)
     else:
       ttk.Label(frame_project_description, text=self.project_description_stringvar.get(), wraplength=200).pack(side="left")
+
+    if self.action != "create":
+      frame_project_time_studied = ttk.Frame(frame_content)
+      frame_project_time_studied.pack(side="top", fill="x", pady=(5,0))
+      ttk.Label(frame_project_time_studied, text="Time spent:", width=WIDTH_LABELS_LEFT).pack(side="left")
+      ttk.Label(frame_project_time_studied, text=self.project_time_studied_stringvar.get(), wraplength=200).pack(side="left")
 
     frame_project_link = ttk.Frame(frame_content)
     frame_project_link.pack(side="top", fill="x", ipady=10)
@@ -368,12 +376,12 @@ class Projects(ttk.Frame):
 
     self.treeview = ttk.Treeview(
       self,
-      columns=self.headers[0:len(self.headers)-2],
+      columns=self.headers[0:4],
       show="headings",
       selectmode='browse',
     )
 
-    for heading in self.headers[0:len(self.headers)-2]:
+    for heading in self.headers[0:4]:
 
       self.treeview.heading(heading, text=heading)
 

@@ -5,7 +5,7 @@ from datetime import datetime, date, timedelta
 from tkinter import messagebox
 from tkinter.simpledialog import askstring
 import json
-from core.paths import DATA_CURRENT_WEEK, DATA_WEEKS_LOG, USER_CONFIG, ICON_PATH, GIFS_PATH
+from core.paths import DATA_CURRENT_WEEK, DATA_WEEKS_LOG, USER_CONFIG, ICON_PATH, GIFS_PATH, PROJECTS_CSV
 from ui.style import StyleManager
 from tkcalendar import *
 from utils.utils import time_to_seconds, seconds_to_time
@@ -184,39 +184,61 @@ class TimerWindow(tk.Toplevel):
     week_days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
     current_day = f"{week_days[datetime.weekday(datetime.today())].capitalize()}, {datetime.today().strftime(FORMAT_DAY_STRING)}"
     time_studied = time_to_seconds(self.timer_hours, self.timer_minutes) + self.timer_seconds
-    subject = self.master.study_subject.get()
+    study_category = self.master.new_frame_value_selected_combobox.get()
+
+    project_tracking = False
+    try:
+      ID_project = study_category.split(": ")[0]
+      study_category = study_category.split(": ")[1]
+      project_tracking = True
+    except IndexError:
+      pass
 
     if check_new_week():
       create_new_week_log()
       clear_current_week_table()
 
-    day_already_inside = False
+    time_to_add = 0
     with open(DATA_CURRENT_WEEK, "r") as tempdata:
       reader = csv.DictReader(tempdata)
 
       for row in reader:
         if str(row["Day"]) == str(current_day):
-          day_already_inside = row
+          time_to_add = int(row["Time"])
           break
 
-    with open(DATA_CURRENT_WEEK, "r") as tempdata_2:
-      reader_2 = csv.reader(tempdata_2)
-      data = list(reader_2)
+    with open(DATA_CURRENT_WEEK, "r") as readf:
+      reader = csv.reader(readf)
+      data = list(reader)
 
-    if day_already_inside:
-      time_to_add = row["Time"]
-      total_seconds = int(time_to_add) + int(time_studied)
-      row_to_write = [current_day, total_seconds, f"{row["Description"]}, {subject.capitalize()}"]
+    total_seconds = time_studied + time_to_add
 
+    if time_to_add > 0: 
       data.pop(1)
-      data.insert(1, row_to_write)
+      description = f"{row["Description"]}, {study_category.capitalize()}"
     else:
-      row_to_write = [current_day, time_studied, subject]
-      data.insert(1, row_to_write)
+      description = study_category.capitalize()
 
-    with open(DATA_CURRENT_WEEK, "w", newline="") as f:
-      writer = csv.writer(f)
+    row_updated = [current_day, total_seconds, description]
+    data.insert(1, row_updated)
+
+    with open(DATA_CURRENT_WEEK, "w", newline="") as writef:
+      writer = csv.writer(writef)
       writer.writerows(data)
+
+    if project_tracking:
+      with open(PROJECTS_CSV, "r") as readf:
+        reader = csv.reader(readf)
+        data_projects = list(reader)
+
+      for row in data_projects[1:]:
+        if int(row[0]) == int(ID_project):
+          row[4] = int(row[4]) + time_studied 
+
+      with open(PROJECTS_CSV, "w", newline="") as writef:
+        writer = csv.writer(writef)
+        writer.writerows(data_projects)
+
 
   def update_timer(self):
     if not self.check_goal_reached():
@@ -315,12 +337,23 @@ class CreateNewLog(tk.Toplevel):
 
     self.selected_day = tk.StringVar(self)
 
-    self.study_subject = tk.StringVar(self)
+    self.new_frame_category_selected = tk.StringVar()
+    self.new_frame_category_selected.set("subject")
+    self.old_frame_category_selected = tk.StringVar()
+    self.old_frame_category_selected.set("subject")
+
+    self.new_frame_value_selected_combobox = tk.StringVar()
+    self.old_frame_value_selected_combobox = tk.StringVar()
+
     with open(USER_CONFIG, "r") as readf:
       data = json.load(readf)
       readf.close()
-    self.study_subject_options = data["subjects"]
-    self.study_subject.set(data["subjects"][0])
+
+    self.new_frame_values_combobox = data["subjects"]
+    self.old_frame_values_combobox = data["subjects"]
+
+    self.new_frame_value_selected_combobox.set(self.new_frame_values_combobox[0])
+    self.old_frame_value_selected_combobox.set(self.old_frame_values_combobox[0])
 
     self.run()
 
@@ -341,6 +374,27 @@ class CreateNewLog(tk.Toplevel):
     self.draw_old_log(frame_old_log)
 
   def draw_current_log(self, frame):
+    def update_list_category():
+      self.new_frame_values_combobox.clear()
+      self.new_frame_label_combobox.config(text=f"Select {self.new_frame_category_selected.get()}:")
+
+      if self.new_frame_category_selected.get() == "projects":
+
+        with open(PROJECTS_CSV, "r") as readf:
+          reader = csv.DictReader(readf)
+
+          for row in reader:
+            if row["Status"] == "Not Started":
+              self.new_frame_values_combobox.append(f"{row['ID']}: {row['Name']}")
+      else:
+        with open(USER_CONFIG, "r") as readf:
+          data = json.load(readf)
+          readf.close()
+        self.new_frame_values_combobox = data["subjects"]
+
+      self.new_frame_value_selected_combobox.set(self.new_frame_values_combobox[0])
+      self.new_frame_combobox.config(values=self.new_frame_values_combobox)
+
     ttk.Label(frame, text="Study time!", font=(StyleManager.get_current_font(), 15, "bold")).pack(side="top", anchor="w", padx=10, pady=10)
 
     frame_current_day = ttk.Frame(frame)
@@ -356,22 +410,54 @@ class CreateNewLog(tk.Toplevel):
     study_time_goal_menu = ttk.Combobox(frame_study_time_goal, textvariable=self.goal_study_time_selected, values=self.goal_study_time_options)
     study_time_goal_menu.pack(side="right")
 
-    frame_subjet = ttk.Frame(frame)
-    frame_subjet.pack(side="top", fill="x", padx=10, pady=3)
-    ttk.Label(frame_subjet, text="Subject:").pack(side="left")
-    study_subject_menu = ttk.Combobox(frame_subjet, textvariable=self.study_subject, values=self.study_subject_options)
-    study_subject_menu.pack(side="right")
+    label_frame_tracking_category = ttk.Labelframe(frame, text="Tracking Category")
+    label_frame_tracking_category.pack(side="top", fill="x", padx=10, pady=(5,0))
+
+    frame_radiobuttons = ttk.Frame(label_frame_tracking_category)
+    frame_radiobuttons.pack(side="top", padx=5, pady=5)
+    radiobutton_subjects = ttk.Radiobutton(frame_radiobuttons, text="Subjects", variable=self.new_frame_category_selected, value="subject", command=lambda: update_list_category())
+    radiobutton_subjects.pack(side="left")
+    radiobutton_projects = ttk.Radiobutton(frame_radiobuttons, text="Projects", variable=self.new_frame_category_selected, value="projects", command=lambda: update_list_category())
+    radiobutton_projects.pack(side="right", padx=(30, 0))
+
+    frame_combobox = ttk.Frame(label_frame_tracking_category)
+    frame_combobox.pack(side="top", fill="x", padx=5, pady=10)
+    self.new_frame_label_combobox = ttk.Label(frame_combobox, text="Select subject:")
+    self.new_frame_label_combobox.pack(side="left")
+    self.new_frame_combobox = ttk.Combobox(frame_combobox, textvariable=self.new_frame_value_selected_combobox, values=self.new_frame_values_combobox)
+    self.new_frame_combobox.pack(side="right", fill="x")
 
     ttk.Separator(frame, orient="horizontal").pack(fill="x", side="top", padx=10, pady=10)
 
     frame_buttons = ttk.Frame(frame)
-    frame_buttons.pack(side="top", fill="x", padx=10, pady=5)
+    frame_buttons.pack(side="top", fill="x", padx=10)
     button_start_timer = ttk.Button(frame_buttons, text="Start", command=lambda: self.start_timer())
     button_start_timer.pack(side="right")
     button_cancel = ttk.Button(frame_buttons, text="Cancel", command=lambda: self.destroy())
     button_cancel.pack(side="left")
 
   def draw_old_log(self, frame):
+    def update_list_category():
+      self.old_frame_values_combobox.clear()
+      self.old_frame_label_combobox.config(text=f"Select {self.new_frame_category_selected.get()}:")
+
+      if self.old_frame_category_selected.get() == "projects":
+
+        with open(PROJECTS_CSV, "r") as readf:
+          reader = csv.DictReader(readf)
+
+          for row in reader:
+            if row["Status"] == "Not Started":
+              self.old_frame_values_combobox.append(f"{row['ID']}: {row['Name']}")
+      else:
+        with open(USER_CONFIG, "r") as readf:
+          data = json.load(readf)
+          readf.close()
+        self.old_frame_values_combobox = data["subjects"]
+
+      self.old_frame_value_selected_combobox.set(self.old_frame_values_combobox[0])
+      self.old_frame_combobox.config(values=self.old_frame_values_combobox)
+
     ttk.Label(frame, text="Forgot to log your session?", font=(StyleManager.get_current_font(), 15, "bold")).pack(side="top", anchor="w", padx=10, pady=10)
 
     frame_select_day = ttk.Frame(frame)
@@ -402,16 +488,27 @@ class CreateNewLog(tk.Toplevel):
     ttk.Label(frame_select_time, text="hours").pack(side="right", padx=5)
     ttk.Entry(frame_select_time, textvariable=self.hours_inserted_stringvar, width=4).pack(side="right")
 
-    frame_select_subject = ttk.Frame(frame)
-    frame_select_subject.pack(side="top", fill="x", padx=10, pady=3)
-    ttk.Label(frame_select_subject, text="Subject:").pack(side="left")
-    study_subject_menu = ttk.Combobox(frame_select_subject, textvariable=self.study_subject, values=self.study_subject_options)
-    study_subject_menu.pack(side="right")
+    label_frame_tracking_category = ttk.Labelframe(frame, text="Tracking Category")
+    label_frame_tracking_category.pack(side="top", fill="x", padx=10, pady=(5,0))
+
+    frame_radiobuttons = ttk.Frame(label_frame_tracking_category)
+    frame_radiobuttons.pack(side="top", padx=5, pady=5)
+    radiobutton_subjects = ttk.Radiobutton(frame_radiobuttons, text="Subjects", variable=self.old_frame_category_selected, value="subject", command=lambda: update_list_category())
+    radiobutton_subjects.pack(side="left")
+    radiobutton_projects = ttk.Radiobutton(frame_radiobuttons, text="Projects", variable=self.old_frame_category_selected, value="projects", command=lambda: update_list_category())
+    radiobutton_projects.pack(side="right", padx=(30, 0))
+
+    frame_combobox = ttk.Frame(label_frame_tracking_category)
+    frame_combobox.pack(side="top", fill="x", padx=5, pady=10)
+    self.old_frame_label_combobox = ttk.Label(frame_combobox, text="Select subject:")
+    self.old_frame_label_combobox.pack(side="left")
+    self.old_frame_combobox = ttk.Combobox(frame_combobox, textvariable=self.old_frame_value_selected_combobox, values=self.old_frame_values_combobox)
+    self.old_frame_combobox.pack(side="right", fill="x")
 
     ttk.Separator(frame, orient="horizontal").pack(fill="x", side="top", padx=10, pady=10)
 
     frame_buttons = ttk.Frame(frame)
-    frame_buttons.pack(side="top", fill="x", padx=10, pady=5)
+    frame_buttons.pack(side="top", fill="x", padx=10, pady=(0,10))
     button_start_timer = ttk.Button(frame_buttons, text="Insert", command=lambda: self.insert_old_log())
     button_start_timer.pack(side="right")
     button_cancel = ttk.Button(frame_buttons, text="Cancel", command=lambda: self.destroy())
@@ -422,86 +519,93 @@ class CreateNewLog(tk.Toplevel):
     minutes = self.minutes_inserted_stringvar.get()
 
     if hours == "" or minutes == "":
-      messagebox.showerror("Empty values", "Values of hours or minutes cannot be empty")
-
+      messagebox.showerror("Empty values", "Values of hours or minutes cannot be empty.")
     else:
+        
       hours = abs(int(hours))
       minutes = abs(int(minutes))
-
       day_log = self.selected_day.get()
       time_to_seconds_new_log = time_to_seconds(hours, minutes)
-      subject_to_log = self.study_subject.get()
+      subject = self.old_frame_value_selected_combobox.get()
 
       new_time_logged = False
 
-      # find if already exists, add to that row
-      # if not, add to the row next to the day before
       rows_to_write = []
-      count = 0
       with open(DATA_CURRENT_WEEK, "r") as readf:
         reader = csv.DictReader(readf)
 
-        day_to_log = int(day_log.split(", ")[1])
+        formatted_day_log = int(day_log.split(", ")[1])
         for row in reader:
           day_current_row = int(row["Day"].split(", ")[1].split("-")[1])
 
-          if day_current_row == day_to_log:
-            seconds_current_day = time_to_seconds(
+          if day_current_row == formatted_day_log:
+            time_in_seconds_current_day = time_to_seconds(
               int(row["Time"].split(" ")[0].replace("h", "")),
               int(row["Time"].split(" ")[1].replace("m", "")),
             ) + int(row["Time"].split(" ")[2].replace("s", ""))
 
-            new_time_in_seconds = time_to_seconds_new_log + seconds_current_day
-            new_time_list = seconds_to_time(new_time_in_seconds)
-            new_time_formatted = f"{new_time_list[0]:02d}h {new_time_list[1]:02d}m {new_time_list[2]:02d}s"
+            updated_time_to_log +=  time_in_seconds_current_day
+            subject = row["Description"] + ", " + subject.capitalize()
 
-            current_row_to_write = {key: 0 for key in row.keys()}
-            for key, value in row.items():
-              if key == "Time":
-                current_row_to_write[key] = new_time_formatted
-              elif key == "Description":
-                current_row_to_write[key] = f"{value}" + ", " + subject_to_log
-              else:
-                current_row_to_write[key] = value
-
-            rows_to_write.append(current_row_to_write)
+            current_row_updated = {key: value  for key, value in row.items()}
+            current_row_updated["Time"] = updated_time_to_log
+            current_row_updated["Description"] = subject
+            rows_to_write.append(current_row_updated)
+            
             new_time_logged = True
-
           else:
             rows_to_write.append(row)
 
-          count += 1
-
+      
         if not new_time_logged:
           count = 0
           for row in rows_to_write:
             day_current_row = int(row["Day"].split(", ")[1].split("-")[1])
 
-            if day_current_row <= day_to_log-1 or day_current_row >= day_to_log+1:
-              new_time_in_seconds = time_to_seconds_new_log
-              new_time_list = seconds_to_time(new_time_in_seconds)
-              new_time_formatted = f"{new_time_list[0]:02d}h {new_time_list[1]:02d}m {new_time_list[2]:02d}s"
-
+            if day_current_row <= formatted_day_log-1 or day_current_row >= formatted_day_log:
               formatted_day = str(day_log.split(", ")[0]) + ", " + str(f"{datetime.today().month:02d}") + "-" + str(day_log.split(", ")[1])
 
-              current_row_to_write = {"Day": 0, "Time": 0, "Description": 0}
-              current_row_to_write["Day"] = formatted_day
-              current_row_to_write["Time"] = new_time_formatted
-              current_row_to_write["Description"] = subject_to_log
+              new_row_to_write = {key: "" for key in row.keys()}
+              new_row_to_write["Day"] = formatted_day
+              new_row_to_write["Time"] = time_to_seconds_new_log
+              new_row_to_write["Description"] = subject
 
-              if day_to_log < day_current_row:
-                count += 1
+              if formatted_day_log < day_current_row: count += 1
 
-              rows_to_write.insert(count, current_row_to_write)
+              rows_to_write.insert(count, new_row_to_write)
               break
-
+            
             count += 1
-        readf.close()
+          readf.close()
 
       with open(DATA_CURRENT_WEEK, "w", newline="") as writef:
         writer = csv.DictWriter(writef, fieldnames=rows_to_write[0].keys())
         writer.writeheader()
         writer.writerows(rows_to_write)
+
+      try:
+        ID_project = subject.split(": ")[0]
+
+        with open(PROJECTS_CSV, "r") as readf_projects:
+          reader = csv.reader(readf_projects)
+
+          rows = []
+          for row in reader:
+            try:
+              if int(row[0]) == int(ID_project):
+                row[4] = int(row[4]) + time_to_seconds_new_log
+            except ValueError:
+              pass
+
+            rows.append(row)
+          readf_projects.close()
+        
+        with open(PROJECTS_CSV, "w", newline="") as writef_projects:
+          writer = csv.writer(writef_projects)
+          writer.writerows(rows)
+
+      except IndexError:
+        pass
 
       self.master.clear_widgets()
       self.master.load_data()
