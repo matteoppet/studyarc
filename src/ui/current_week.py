@@ -7,7 +7,6 @@ from tkinter.simpledialog import askstring
 import json
 from core.paths import DATA_CURRENT_WEEK, DATA_WEEKS_LOG, USER_CONFIG, ICON_PATH, GIFS_PATH, PROJECTS_CSV
 from ui.style import StyleManager
-from tkcalendar import *
 from utils.utils import time_to_seconds, seconds_to_time
 from PIL import ImageTk, Image, ImageSequence
 
@@ -151,7 +150,7 @@ class TimerWindow(tk.Toplevel):
         for row in reader:
           week_days.append(row)
           time_to_add = row["Time"]
-          total_time_studied += time_to_add
+          total_time_studied += int(time_to_add)
         
       with open(DATA_WEEKS_LOG, "r") as readf_weeks:
         reader = csv.reader(readf_weeks)
@@ -225,7 +224,7 @@ class TimerWindow(tk.Toplevel):
     with open(DATA_CURRENT_WEEK, "w", newline="") as writef:
       writer = csv.writer(writef)
       writer.writerows(data)
-
+    
     if project_tracking:
       with open(PROJECTS_CSV, "r") as readf:
         reader = csv.reader(readf)
