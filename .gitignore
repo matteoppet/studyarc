@@ -11,3 +11,4 @@ __pycache__
 /builds
 build.bat
 .env
+data/database.db
