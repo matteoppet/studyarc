@@ -3,7 +3,7 @@ from tkinter import ttk
 from tkinter import messagebox
 from tktooltip import ToolTip
 
-from core.paths import USER_CONFIG, ICON_PATH, GIFS_PATH
+from core.paths import USER_CONFIG, ICON_PATH
 from ui.style import StyleManager
 
 import webbrowser
@@ -95,12 +95,6 @@ class Settings(tk.Toplevel):
     self.list_subjects_available = data["subjects"]
     self.subjects_available_stringvar.set(self.list_subjects_available)
 
-    self.filepath_gif_uploaded = None
-
-    self.available_gifs = [filename for filename in os.listdir(GIFS_PATH)]
-    self.selected_gif = tk.StringVar()
-    self.selected_gif.set("default.gif")
-
     self.draw()
 
   def draw(self):
@@ -135,36 +129,6 @@ class Settings(tk.Toplevel):
     def change_style(new_style):
       StyleManager.change_style(new_style)
       StyleManager(self.root)
-
-    def upload_file():
-      from tkinter import filedialog
-
-      filepath = filedialog.askopenfilename(filetypes=[("GIF files", "*.gif")])
-      self.filepath_gif_uploaded = filepath
-      self.filepath_label.configure(text=f"File: {self.filepath_gif_uploaded}")
-
-      self.button_save.configure(style="Green.TButton")
-
-    def save_gif_uploaded():
-      if self.filepath_gif_uploaded:
-        shutil.copy2(self.filepath_gif_uploaded, GIFS_PATH)
-        
-        filename = self.filepath_gif_uploaded.split('/')[-1]
-
-        with open(USER_CONFIG, "r") as readf:
-          data = json.load(readf)
-
-        data["filename_gif"] = filename
-
-        with open(USER_CONFIG, "w") as writef:
-          writef.write(json.dumps(data, indent=2))
-
-        self.available_gifs = [filename for filename in os.listdir(GIFS_PATH)]
-
-        messagebox.showinfo("Upload gif", "The gif has been uploaded successfully, you now can switch to it in the 'select gif' below.")
-
-        self.clear_content_frame()
-        self.run_settings_frame()
 
     self.clear_content_frame()
 
@@ -211,39 +175,16 @@ class Settings(tk.Toplevel):
     frame_themes = ttk.Frame(appearance_frame_content)
     frame_themes.pack(side="top", fill="x")
     ttk.Label(frame_themes, text="Themes", anchor="w", width=26).pack(side="left")
-    themes_menu = ttk.Combobox(frame_themes, textvariable=self.current_theme_stringvar, values=StyleManager.get_all_themes(), width=20)
+    themes_menu = ttk.Combobox(frame_themes, textvariable=self.current_theme_stringvar, values=StyleManager.get_all_themes(), width=20, state="disabled")
     themes_menu.pack(side="right")
     themes_menu.bind('<<ComboboxSelected>>', lambda event: change_theme(self.current_theme_stringvar.get()))
 
     frame_fonts = ttk.Frame(appearance_frame_content)
     frame_fonts.pack(side="top", pady=5, fill="x")
     ttk.Label(frame_fonts, text="Fonts", anchor="w", width=26).pack(side="left")
-    fonts_menu = ttk.Combobox(frame_fonts, textvariable=self.current_font_stringvar, values=StyleManager.get_all_fonts(), width=20)
+    fonts_menu = ttk.Combobox(frame_fonts, textvariable=self.current_font_stringvar, values=StyleManager.get_all_fonts(), width=20, state="disabled")
     fonts_menu.pack(side="right")
     fonts_menu.bind('<<ComboboxSelected>>', lambda event: change_font(self.current_font_stringvar.get()))
-
-    frame_study_timer_gif_upload = ttk.Labelframe(appearance_frame_content, text="Study Timer GIF")
-    frame_study_timer_gif_upload.pack(side="top", fill="x", pady=5)
-    ttk.Label(frame_study_timer_gif_upload, text="You can upload your own gif to be displayed on the study timer.", font=(StyleManager.get_current_font(), 9)).pack(side="top", anchor="w", padx=5, pady=5)
-
-    frame_button_upload = ttk.Frame(frame_study_timer_gif_upload)
-    frame_button_upload.pack(side="top", fill="x", padx=20, pady=10)
-    ttk.Button(frame_button_upload, text="Upload file", command=lambda: upload_file()).pack(side="top", fill="both")
-    self.filepath_label = ttk.Label(frame_button_upload, text="File: No file selected", font=(StyleManager.get_current_font(), 8))
-    self.filepath_label.pack(side="top", anchor="w", pady=2)
-
-    frame_save_and_info = ttk.Frame(frame_study_timer_gif_upload)
-    frame_save_and_info.pack(side="top", fill="x", padx=5, pady=3)
-    ttk.Label(frame_save_and_info, text="The GIF will be scaled to this size: 300x160", font=(StyleManager.get_current_font(), 8), foreground="red").pack(side="left", anchor="w")
-    self.button_save = ttk.Button(frame_save_and_info, text="Save", command=lambda: save_gif_uploaded())
-    self.button_save.pack(side="right", anchor="e")
-
-    ttk.Separator(frame_study_timer_gif_upload, orient="horizontal").pack(padx=10, pady=10, fill="x")
-
-    frame_selection_gif = ttk.Frame(frame_study_timer_gif_upload)
-    frame_selection_gif.pack(side="top", fill="x", padx=5, pady=5)
-    ttk.Label(frame_selection_gif, text="Select gif:", font=(StyleManager.get_current_font(), 9)).pack(side="left")
-    ttk.Combobox(frame_selection_gif, values=self.available_gifs, textvariable=self.selected_gif).pack(side="right")
 
     ############### STUDY SETUP SECTION
     study_setup_content = ttk.Frame(center_wrapper)

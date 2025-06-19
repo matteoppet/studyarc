@@ -1,9 +1,6 @@
-import urllib
-import subprocess 
+import urllib.request
 import sys
 import os
-import psutil
-import time
 
 CURRENT_VERSION = "1.4.0"
 REMOTE_URL = "https://raw.githubusercontent.com/matteoppet/studyarc/main/data/version.txt"
@@ -34,7 +31,7 @@ def install_new_version(root_window):
      print("Error downloading installer")
   
   with open(batch_path, "w") as f:
-        f.write(f"""@echo off
+        f.write("""@echo off
 set EXE=studyarc.exe
 
 echo Waiting for %EXE% to close...

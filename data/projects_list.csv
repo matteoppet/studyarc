@@ -1,2 +1,0 @@
-ID,Status,Name,Description,Time,Link,Tasks
-8,Not Started,Study Tracker,"A lightweight, minimal study tracker",22207,[],"{3: {'status': False, 'name': 'Test 3'}, 2: {'status': False, 'name': 'Test 2'}, 4: {'status': False, 'name': None}, 1: {'status': False, 'name': None}}"

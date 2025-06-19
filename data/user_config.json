@@ -1,10 +1,10 @@
 {
-  "last_day": "2025 6 10",
+  "last_day": "2025-06-19",
   "session_goal": [
     0,
     45
   ],
-  "style": "xpnative",
+  "style": "vista",
   "theme": "Light",
   "font": "@Microsoft JhengHei",
   "subjects": [

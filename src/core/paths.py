@@ -1,7 +1,7 @@
 import os
 import sys 
-import shutil
 import json
+from datetime import datetime
 
 def is_frozen():
   return getattr(sys, 'frozen', False)
@@ -31,56 +31,38 @@ def initialize_user_data_file(filename, headers):
           writef.write(headers)
       else:
         data = {
-          "last_day": "2025 5 31",
+          "last_day": f"{datetime.today().strftime('%Y-%m-%d')}",
           "session_goal": [
             0,
             45
           ],
-          "style": "xpnative",
+          "style": "vista",
           "theme": "Light",
           "font": "@Microsoft JhengHei",
           "subjects": [
             "Math",
             "Physics"
           ],
-          "filename_gif": "default.gif"
         }
         with open(file=user_file, mode="w") as writef:
           writef.write(json.dumps(data, indent=2))
 
     return user_file
 
-def create_gifs_folder():
-  path_directory = os.path.join(USER_DATA_DIR, "gifs")
-  
-  if not os.path.exists(path_directory):
-    os.mkdir(path_directory)
-    shutil.copy2(os.path.join(APP_DIR, "assets", "gifs", "default.gif"), path_directory)
-
-  return path_directory
-  
 IS_EXECUTABLE = is_frozen()
 USER_DATA_DIR = get_user_data_dir()
 
 if IS_EXECUTABLE: 
   APP_DIR = get_app_dir()
 
-  DATA_CURRENT_WEEK = initialize_user_data_file("data_current_week.csv", "Day,Time,Description")
-  DATA_WEEKS_LOG = initialize_user_data_file("data_weeks_log.csv", "Week number,Total Time,Summary")
   USER_CONFIG = initialize_user_data_file("user_config.json", "")
-  PROJECTS_CSV = initialize_user_data_file("projects_list.csv", "ID,Status,Name,Description,Time,Link,Tasks")
-
-  GIFS_PATH = create_gifs_folder()
-
-  SETTINGS_PATH = os.path.join(APP_DIR, "settings.yaml")
   ICON_PATH = os.path.join(APP_DIR, "assets", "logo.ico")
+  USER_PATH = os.path.join(APP_DIR, "assets", "user.png")
+  DATABASE_PATH = initialize_user_data_file("database.db", "")
 else: 
   APP_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-  DATA_CURRENT_WEEK = os.path.join(APP_DIR, "data", "data_current_week.csv")
-  DATA_WEEKS_LOG = os.path.join(APP_DIR, "data", "data_weeks_log.csv")
   USER_CONFIG = os.path.join(APP_DIR, "data", "user_config.json")
-  SETTINGS_PATH = os.path.join(APP_DIR, "data", "settings.yaml")
-  PROJECTS_CSV = os.path.join(APP_DIR, "data", "projects_list.csv")
   ICON_PATH = os.path.join(APP_DIR, "data", "assets", "logo.ico")
-  GIFS_PATH = os.path.join(APP_DIR, "data", "assets", "gifs")
+  USER_PATH = os.path.join(APP_DIR, "data", "assets", "user.png")
+  DATABASE_PATH = os.path.join(APP_DIR, "data", "database.db")
