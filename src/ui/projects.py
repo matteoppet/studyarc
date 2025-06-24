@@ -112,8 +112,9 @@ class OverviewProject(ttk.Frame):
             self.treeview.column(heading, anchor='center')
 
         self.cursor.execute("SELECT id, name, status FROM tasks WHERE project_id = ? AND user_id = ?", (self.project_id, self.user_id,))
+    
         for row in self.cursor.fetchall():
-          self.treeview.insert("", tk.END, values=row[1:], iid=row[0])
+          self.treeview.insert("", tk.END, values=row[1:], iid=row[0], tags=(row[2].lower(),))
 
         self.collapse_menu = tk.Menu(self, tearoff=0)
         self.collapse_menu.add_command(label="Delete", command=lambda: self.delete_task())
@@ -125,6 +126,8 @@ class OverviewProject(ttk.Frame):
 
         self.collapse_menu.add_cascade(label="Status", menu=menustatus)
         self.treeview.bind("<Button-3>", self.open_collapse_menu)
+        self.treeview.tag_configure("done", foreground="green")
+        self.treeview.tag_configure("in progress", foreground="orangered")
         
         self.treeview.pack(side="top", fill="both", expand=True, pady=10)
     except TypeError:
@@ -156,7 +159,7 @@ class OverviewProject(ttk.Frame):
     self.cursor.execute("UPDATE tasks SET status = ? WHERE id = ? AND project_id = ? AND user_id = ?", (new_status, id_task, self.project_id, self.user_id))
     self.conn.commit()
     self.treeview.delete(id_task)
-    self.treeview.insert("", 0 if new_status == "In Progress" else tk.END, iid=id_task, values=(name, new_status))
+    self.treeview.insert("", 0 if new_status.lower() in ["in progress", "not started"] else tk.END, iid=id_task, values=(name, new_status), tags=(new_status.lower(),))
   
   def open_collapse_menu(self, event):
     item_id = self.treeview.identify_row(event.y)
@@ -193,7 +196,7 @@ class Projects(tk.Toplevel):
     self.user_id = user_id
     self.title("Projects")
     self.minsize(500, 400)
-    self.transient(self.root)
+    # self.transient(self.root)
     self.geometry(f"+{self.winfo_pointerx()}+{self.winfo_pointery()}")
 
     self.frame_projects = ttk.Frame(self, width=170)

@@ -81,7 +81,7 @@ class Timer(Toplevel):
     self.id_timer_gif = self.after(100, self.play_gif)
 
   def update_timer(self):
-    if self.check_goal_reached() or (self.goal_hours == 0 and self.goal_minutes == 0):
+    if not self.check_goal_reached():
       if self.timer_seconds != 59:
         self.timer_seconds += 1
       else:
@@ -95,17 +95,22 @@ class Timer(Toplevel):
       self.timer_text.configure(text=f"{self.timer_hours:02d}:{self.timer_minutes:02d}:{self.timer_seconds:02d}")
       self.id_timer = self.after(1000, self.update_timer)
     else:
-      messagebox.showinfo("Session Completed", "Congratulation, you have reached your time session goal!")
+      if not messagebox.askyesno("Session Completed", "Congratulation, you have reached your goal!\n\nDo you want to start a new timer?"):
+        self.destroy()
+        self.root.root.controller.deiconify()
+        self.root.root.controller.run()
+      else:
+        self.reset()
 
   def check_goal_reached(self):
-    if self.goal_hours != 0 and self.goal_minutes != 0:
+    if self.goal_hours != 0 or self.goal_minutes != 0:
       goal_in_seconds = time_to_seconds(self.goal_hours, self.goal_minutes)
       current_timer_in_seconds = time_to_seconds(self.timer_hours, self.timer_minutes)
 
       if goal_in_seconds == current_timer_in_seconds:
         self.save()
-        self.reset()
         return True
+    else: return False
 
   def save(self):
     def check_new_week(today_date, last_day_recorded):
@@ -192,7 +197,7 @@ class Timer(Toplevel):
   def close(self):
     confirm_close = False
 
-    if not self.check_goal_reached() and (self.goal_hours != 0 and self.goal_minutes != 0):
+    if not self.check_goal_reached():
       if messagebox.askyesno("Closing Timer", "You have not reached your goal estabilished, are you sure you want to end the session?\n\nCurrent progress will be saved."):
         confirm_close = True
 
@@ -423,6 +428,8 @@ class CreateNewLog(Toplevel):
     hours, minutes = self.old_log_hours.get(), self.old_log_minutes.get()
     user_id = self.user_id
 
+    day = datetime.strptime(day, "%m/%d/%y").strftime("%Y-%m-%d")
+
     self.cursor.execute("INSERT INTO sessions (date, time, description, user_id) VALUES (?, ?, ?, ?)", (day, time_to_seconds(hours, minutes), area, user_id))
     self.conn.commit()
 
@@ -466,7 +473,7 @@ class Home(ttk.Frame):
     ttk.Label(current_day_frame, text=datetime.today().strftime(FORMAT_DAY_STRING), font=("TkDefaultFont", 9, "bold")).pack(side="left")
 
     self.cursor.execute("PRAGMA table_info(sessions)")
-    headers_name = [row[1] for row in self.cursor.fetchall()][0:5]
+    headers_name = [row[1] for row in self.cursor.fetchall()][0:4]
     self.treeview = ttk.Treeview(
       self,
       columns=headers_name,
@@ -496,18 +503,19 @@ class Home(ttk.Frame):
 
     self.cursor.execute("SELECT * FROM sessions WHERE user_id = ? AND date >= ?", (self.user_id, self.get_monday_of_current_week(), ))
     for row in reversed(self.cursor.fetchall()):
-      values = list(row[0:5])
+      values = list(row[0:4])
 
-      values[1] = "👍" if int(values[3]) > int(goal_in_seconds) else "👎"
-      time_formatted = seconds_to_time(int(values[3]))
-      values[3] = FORMAT_TIME_STRING.replace("%h", f"{time_formatted[0]:02d}").replace("%m", f"{time_formatted[1]:02d}").replace("%s", f"{time_formatted[2]:02d}")
+      seconds_current_row = values[2]
+      time_formatted = seconds_to_time(int(values[2]))
+      values[2] = FORMAT_TIME_STRING.replace("%h", f"{time_formatted[0]:02d}").replace("%m", f"{time_formatted[1]:02d}").replace("%s", f"{time_formatted[2]:02d}")
 
       self.treeview.insert(
         "",
         tk.END,
-        values=values)
+        values=values,
+        tags=(True if int(seconds_current_row) >= int(goal_in_seconds) else False))
       
-    self.treeview.tag_configure("current_day", background="gray1")
+    self.treeview.tag_configure(True, foreground="green")
     self.treeview.pack(side="left", fill="both", expand=True)
 
   def clear_widgets(self):

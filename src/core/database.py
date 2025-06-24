@@ -22,7 +22,6 @@ CREATE TABLE IF NOT EXISTS users (
     self.cursor.execute("""
 CREATE TABLE IF NOT EXISTS sessions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  goal BOOLEAN,
   date TEXT,
   time INTEGER,
   description TEXT,
