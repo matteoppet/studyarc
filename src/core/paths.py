@@ -31,18 +31,30 @@ def initialize_user_data_file(filename, headers):
           writef.write(headers)
       else:
         data = {
-          "last_day": f"{datetime.today().strftime('%Y-%m-%d')}",
-          "session_goal": [
-            0,
-            45
-          ],
-          "style": "vista",
-          "theme": "Light",
-          "font": "@Microsoft JhengHei",
-          "subjects": [
-            "Math",
-            "Physics"
-          ],
+          "data": {
+            "previous_session_date": "",
+            "streak": 0,
+            "subjects": [
+              "Math"
+            ]
+          },
+          "preferences": {
+            "style": "xpnative"
+          },
+          "goals": {
+            "daily_session_goal": [
+              0,
+              1
+            ]
+          },
+          "display_options": {
+            "show_metrics_frame": True,
+            "show_tables_frame": True,
+            "show_charts_frame": True
+          },
+          "version_info": {
+            "auto_update": True
+          }
         }
         with open(file=user_file, mode="w") as writef:
           writef.write(json.dumps(data, indent=2))
