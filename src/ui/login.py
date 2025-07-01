@@ -12,7 +12,7 @@ class Login(tk.Toplevel):
     self.root = root
     self.title("Login")
     self.minsize(300,390)
-    self.geometry(f"+{self.winfo_pointerx()}+{self.winfo_pointery()}")
+    self.geometry(f"+{int(self.winfo_screenmmwidth()/2)}+{int(self.winfo_screenmmheight()/2)}")
     self.transient(self.root)
 
     try: 

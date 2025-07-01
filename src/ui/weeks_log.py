@@ -3,6 +3,7 @@ from tkinter import ttk
 from utils.utils import seconds_to_time
 from tkinter import messagebox 
 from datetime import datetime, timedelta
+from core.paths import ICON_PATH
 
 class Week(tk.Toplevel):
   class FrameDay(ttk.Frame):
@@ -46,6 +47,11 @@ class Week(tk.Toplevel):
     self.cursor = cursor
     self.conn = conn
     self.minsize(400, 200)
+
+    try: 
+      self.iconbitmap(ICON_PATH)
+    except tk.TclError:
+      self.iconbitmap("../assets/logo.ico")
 
     self.start_week = None
     self.end_week = None 
@@ -92,14 +98,12 @@ class WeeksLog(ttk.Frame):
     self.user_id = user_id
     self.cursor = cursor
     self.conn = conn
-    self.pack(side="right", anchor="n", padx=15, pady=15, expand=True, fill="both")
-    self.pack_propagate(False)
-    self.configure(width=self.winfo_width()/2)
+    self.pack(side="left", anchor="n", padx=15, pady=15, fill="both", expand=True)
     
   def draw(self):
     title_frame = ttk.Frame(self)
     title_frame.pack(fill="x")
-    ttk.Label(title_frame, text="Weeks Log", font=("TkDefaultFont", 15, "bold")).pack(side="left")
+    ttk.Label(title_frame, text="Weekly Logs", font=("TkDefaultFont", 15, "bold")).pack(side="left")
 
     total_time_studied_frame = ttk.Frame(self)
     total_time_studied_frame.pack(fill="x", pady=10)
@@ -113,7 +117,7 @@ class WeeksLog(ttk.Frame):
     ttk.Label(total_time_studied_frame, text=time_formatted, font=("TkDefaultFont", 9, "bold")).pack(side="left")
 
     self.cursor.execute("PRAGMA table_info(weeks_log)")
-    headers_name = [row[1] for row in self.cursor.fetchall()][0:4]
+    headers_name = [row[1] for row in self.cursor.fetchall()][1:4]
     self.treeview = ttk.Treeview(
       self,
       columns=headers_name,
@@ -121,34 +125,28 @@ class WeeksLog(ttk.Frame):
     )
 
     for heading in headers_name: 
-      if heading.lower() == "id":
-        self.treeview.heading(heading, text=heading.upper())
-      else:
-        self.treeview.heading(heading, text=heading.title().replace("_", " "))
-
-      if heading.lower() in ["time", "id"]:
-        self.treeview.column(heading, width=int((self.winfo_width()/2)/4), anchor="center")
-      else:
-        self.treeview.column(heading, width=int((self.winfo_width()/2)/4), anchor="w")  
+      self.treeview.heading(heading, text=heading.title().replace("_", " "))
+      self.treeview.column(heading, anchor="center")
 
     self.cursor.execute("SELECT * FROM weeks_log WHERE user_id = ?", (self.user_id, ))
     for row in self.cursor.fetchall():
-      values = list(row[0:4])
+      values = list(row[1:4])
 
 
-      time = seconds_to_time(int(values[3]))
-      values[3] = f"{time[0]:02d}:{time[1]:02d}:{time[2]:02d}"
+      time = seconds_to_time(int(values[2]))
+      values[2] = f"{time[0]:02d}:{time[1]:02d}:{time[2]:02d}"
 
       self.treeview.insert(
         "",
         tk.END,
-        values=values
+        values=values,
+        iid=row[0]
       )
 
     v_scrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL, command=self.treeview.yview)
     self.treeview.configure(yscrollcommand=v_scrollbar.set)
     self.treeview.pack(side="left", fill="both", expand=True)
-    v_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+    v_scrollbar.pack(side="left", fill=tk.Y)
 
     self.collapse_menu = tk.Menu(self, tearoff=0)
     self.collapse_menu.add_command(label="Open", command=lambda: self.open_week()) 
@@ -164,8 +162,7 @@ class WeeksLog(ttk.Frame):
 
   def open_week(self):
     selected = self.treeview.selection()
-    ID = int(self.treeview.item(selected[0], "values")[0])
-    Week(self, self.user_id, ID, self.cursor, self.conn)
+    Week(self, self.user_id, int(selected[0]), self.cursor, self.conn)
 
   def delete_week(self):
     if messagebox.askyesno("Delete Week Record", "Are you sure to delete this week record?\n\nThis action is irreversible."):
@@ -173,4 +170,5 @@ class WeeksLog(ttk.Frame):
       ID = int(self.treeview.item(selected[0], "values")[0])
       self.treeview.delete(selected[0])
       self.cursor.execute("DELETE FROM weeks_log WHERE id = ?", (ID,))
+      self.conn.commit()
       messagebox.showinfo("Delete Week Record", "The record has been successfully deleted.")

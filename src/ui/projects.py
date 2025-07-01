@@ -2,9 +2,8 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 
+from core.paths import ICON_PATH
 from utils.utils import seconds_to_time
-
-# insert time and tasks and title
 
 class OverviewProject(ttk.Frame):
   def __init__(self, root, project_id = None, user_id = None, cursor = None, conn = None):
@@ -114,7 +113,7 @@ class OverviewProject(ttk.Frame):
         self.cursor.execute("SELECT id, name, status FROM tasks WHERE project_id = ? AND user_id = ?", (self.project_id, self.user_id,))
     
         for row in self.cursor.fetchall():
-          self.treeview.insert("", tk.END, values=row[1:], iid=row[0], tags=(row[2].lower(),))
+          self.treeview.insert("", tk.END if row[2].lower() == "done" else 0, values=row[1:], iid=row[0], tags=(row[2].lower(),))
 
         self.collapse_menu = tk.Menu(self, tearoff=0)
         self.collapse_menu.add_command(label="Delete", command=lambda: self.delete_task())
@@ -187,10 +186,9 @@ class OverviewProject(ttk.Frame):
     self.draw()
 
 class Projects(tk.Toplevel):
-  def __init__(self, root, controller, cursor, conn, user_id):
+  def __init__(self, root, cursor, conn, user_id):
     super().__init__(root)
     self.root = root
-    self.controller = controller
     self.cursor = cursor
     self.conn = conn
     self.user_id = user_id
@@ -198,6 +196,11 @@ class Projects(tk.Toplevel):
     self.minsize(500, 400)
     # self.transient(self.root)
     self.geometry(f"+{self.winfo_pointerx()}+{self.winfo_pointery()}")
+
+    try: 
+      self.iconbitmap(ICON_PATH)
+    except tk.TclError:
+      self.iconbitmap("../assets/logo.ico")
 
     self.frame_projects = ttk.Frame(self, width=170)
     self.frame_projects.pack(side="left", fill="y")
@@ -248,8 +251,8 @@ class Projects(tk.Toplevel):
       new_id = self.cursor.lastrowid
       self.treeview.insert("", index=0, text=name, iid=new_id, tags=("Not Started",))
       self.name_new_project_stringvar.set("")
-
       messagebox.showinfo("New project", "New project has been successfully created")
+      self.tkraise(self.root)
 
   def open_project(self, event):
     selected_item = self.treeview.focus()

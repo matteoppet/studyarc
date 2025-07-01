@@ -5,11 +5,10 @@ from tktooltip import ToolTip
 
 from core.paths import USER_CONFIG, ICON_PATH
 from ui.style import StyleManager
+from core.version import CURRENT_VERSION
 
 import webbrowser
 import json
-import shutil
-import os
 
 class Settings(tk.Toplevel):
   class NewSubjectWindow(tk.Toplevel):
@@ -51,7 +50,7 @@ class Settings(tk.Toplevel):
           data = json.load(readf)
           readf.close()
 
-        data["subjects"] = self.root.list_subjects_available
+        data["data"]["subjects"] = self.root.list_subjects_available
 
         with open(USER_CONFIG, "w") as writef:
           writef.write(json.dumps(data, indent=2))
@@ -89,10 +88,14 @@ class Settings(tk.Toplevel):
     self.current_style_stringvar = tk.StringVar()
     self.current_style_stringvar.set(StyleManager.get_current_style())
 
+    with open(USER_CONFIG, "r") as user_config_file:
+      data = json.load(user_config_file)
+    self.auto_update_var = tk.BooleanVar(value=data["version_info"]["auto_update"])
+
     with open(USER_CONFIG, "r") as readf:
       data = json.load(readf)
       readf.close()
-    self.list_subjects_available = data["subjects"]
+    self.list_subjects_available = data["data"]["subjects"]
     self.subjects_available_stringvar.set(self.list_subjects_available)
 
     self.draw()
@@ -132,7 +135,7 @@ class Settings(tk.Toplevel):
 
     self.clear_content_frame()
 
-    ttk.Label(self.frame_content, text="Settings", font=(StyleManager.get_current_font(), 16)).pack(padx=15, pady=15, anchor="nw")
+    ttk.Label(self.frame_content, text="Settings", font=("TkDefaultFont", 16)).pack(padx=15, pady=15, anchor="nw")
     ttk.Separator(self.frame_content, orient="horizontal").pack(fill="x")
 
     frame_for_canvas_and_scrollbar = ttk.Frame(self.frame_content)
@@ -159,7 +162,7 @@ class Settings(tk.Toplevel):
     ############### APPEARANCE SECTION
     appearance_frame_content = ttk.Frame(center_wrapper)
     appearance_frame_content.pack(side="top", fill="x")
-    ttk.Label(appearance_frame_content, text="Appearance", font=(StyleManager.get_current_font(), 14, "bold")).pack(side="top", anchor="nw")
+    ttk.Label(appearance_frame_content, text="Appearance", font=("TkDefaultFont", 14, "bold")).pack(side="top", anchor="nw")
     ttk.Separator(appearance_frame_content, orient="horizontal").pack(side="top", fill="x", pady=10)
 
     frame_styles = ttk.Frame(appearance_frame_content)
@@ -189,7 +192,7 @@ class Settings(tk.Toplevel):
     ############### STUDY SETUP SECTION
     study_setup_content = ttk.Frame(center_wrapper)
     study_setup_content.pack(side="top", pady=20, fill="x")
-    ttk.Label(study_setup_content, text="Study Setup", font=(StyleManager.get_current_font(), 14, "bold")).pack(side="top", anchor="nw")
+    ttk.Label(study_setup_content, text="Study Setup", font=("TkDefaultFont", 14, "bold")).pack(side="top", anchor="nw")
     ttk.Separator(study_setup_content, orient="horizontal").pack(side="top", fill="x", pady=10)
 
     frame_subjects = ttk.Frame(study_setup_content)
@@ -216,8 +219,8 @@ class Settings(tk.Toplevel):
     with open(USER_CONFIG, "r") as readf:
       data = json.load(readf)
 
-      self.hours_inserted_stringvar.set(data["session_goal"][0])
-      self.minutes_inserted_stringvar.set(data["session_goal"][1]) 
+      self.hours_inserted_stringvar.set(data["goals"]["daily_session_goal"][0])
+      self.minutes_inserted_stringvar.set(data["goals"]["daily_session_goal"][1]) 
 
       readf.close()
 
@@ -229,11 +232,34 @@ class Settings(tk.Toplevel):
     ttk.Label(frame_daily_goal, text="hours").pack(side="right", padx=5)
     ttk.Entry(frame_daily_goal, textvariable=self.hours_inserted_stringvar, width=4).pack(side="right")
 
-    # frame_current_page.pack(side="top", anchor="center")
+    ################## FRAME VERSION INFO
+    frame_version_info = ttk.Frame(center_wrapper)
+    ttk.Label(frame_version_info, text="Version Info", font=("TkDefaultFont", 14, "bold")).pack(side="top", anchor="nw")
+    ttk.Separator(frame_version_info, orient="horizontal").pack(side="top", fill="x", pady=10)
+    frame_version_info.pack(side="top", fill="x")
+
+    frame_version = ttk.Frame(frame_version_info)
+    frame_version.pack(side="top", fill="x")
+    ttk.Label(frame_version, text="Current version:", width=26).pack(side="left")
+    ttk.Label(frame_version, text=CURRENT_VERSION).pack(side="left")
+
+    frame_auto_update = ttk.Frame(frame_version_info)
+    ttk.Label(frame_auto_update, text="Auto update:", width=26).pack(side="left")
+    ttk.Checkbutton(frame_auto_update, variable=self.auto_update_var, command=lambda: self.change_auto_update()).pack(side="left")
+    frame_auto_update.pack(side="top", fill="x", pady=10)
+
     canvas.pack(side="left", expand=True, fill="both")
     scrollbar.pack(side="right", fill="y")
 
     self.mainloop()
+
+  def change_auto_update(self):
+    with open(USER_CONFIG, "r") as user_config_file:
+        data = json.load(user_config_file)
+    data["version_info"]["auto_update"] = self.auto_update_var.get()
+
+    with open(USER_CONFIG, "w") as user_config_write_file:
+      user_config_write_file.write(json.dumps(data, indent=2))
 
   def change_session_goal_time(self):
     new_hours = self.hours_inserted_stringvar.get()
@@ -247,7 +273,7 @@ class Settings(tk.Toplevel):
         data = json.load(readf)
         readf.close()
 
-      data["session_goal"] = [new_hours, new_minutes]
+      data["goals"]["daily_session_goals"] = [new_hours, new_minutes]
 
       with open(USER_CONFIG, "w") as writef:
         writef.write(json.dumps(data, indent=2))
@@ -269,7 +295,7 @@ class Settings(tk.Toplevel):
       data = json.load(readf)
       readf.close()
 
-    data["subjects"] = self.list_subjects_available
+    data["data"]["subjects"] = self.list_subjects_available
 
     with open(USER_CONFIG, "w") as writef:
       writef.write(json.dumps(data, indent=2))

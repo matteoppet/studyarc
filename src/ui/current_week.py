@@ -6,7 +6,7 @@ from tkinter.simpledialog import askstring
 import json
 from core.paths import USER_CONFIG, ICON_PATH
 from ui.style import StyleManager
-from utils.utils import time_to_seconds, seconds_to_time
+from utils.utils import time_to_seconds, seconds_to_time, get_current_week_dates
 from tkcalendar import Calendar
 
 FORMAT_TIME_STRING = "%h:%m:%s"
@@ -118,7 +118,7 @@ class Timer(Toplevel):
         data = json.load(readf)
 
       if last_day_recorded == "":
-        data["last_day"] = today_date
+        data["data"]["previous_session_date"] = today_date
         with open(USER_CONFIG, "w") as outfile:
           outfile.write(json.dumps(data, indent=2))
 
@@ -127,7 +127,7 @@ class Timer(Toplevel):
         date1 = "2028-02-02"
         date2 = datetime(int(today_date.split("-")[0]), int(today_date.split("-")[1]), int(today_date.split("-")[2])).isocalendar()[:2]
 
-        data["last_day"] = today_date
+        data["data"]["previous_session_date"] = today_date
         with open(USER_CONFIG, "w") as outfile:
           outfile.write(json.dumps(data, indent=2))
         
@@ -136,8 +136,7 @@ class Timer(Toplevel):
     def create_new_week_log(last_day_recorded):
       date_object = datetime.strptime(last_day_recorded, "%Y-%m-%d")
       date_only_object = date_object.date()
-      get_monday = self.root.root.get_monday_of_current_week(date_only_object)
-      get_sunday = self.root.root.get_sunday_of_current_week(date_only_object)
+      get_monday, get_sunday = get_current_week_dates(date_only_object)
 
       total_time = 0
       self.cursor.execute("SELECT time FROM sessions WHERE date >= ? AND date <= ?", (get_monday, get_sunday,))
@@ -168,7 +167,19 @@ class Timer(Toplevel):
 
       with open(USER_CONFIG, "r") as readf:
         data = json.load(readf)
-      last_day_recorded = data["last_day"]
+      last_day_recorded = data["data"]["previous_session_date"]
+
+      yesterday = datetime.now() - timedelta(1)
+      yesterday_formatted = datetime.strftime(yesterday, '%Y-%m-%d')
+
+      if last_day_recorded == yesterday_formatted or last_day_recorded == "":
+        preview_streak = data["data"]["streak"]
+        data["data"]["streak"] = int(preview_streak) + 1
+      else:
+        data["data"]["streak"] = 0
+
+      with open(USER_CONFIG, "w") as write_file:
+        write_file.write(json.dumps(data, indent=2))
 
       if check_new_week(today, last_day_recorded):
         create_new_week_log(last_day_recorded)
@@ -192,7 +203,6 @@ class Timer(Toplevel):
     self.draw()
     
     self.id_timer = self.after(1000, self.update_timer)
-    # self.id_timer_gif = self.after(100, self.play_gif)
 
   def close(self):
     confirm_close = False
@@ -204,8 +214,8 @@ class Timer(Toplevel):
     if confirm_close or (self.goal_hours == 0 and self.goal_minutes == 0):
       self.save()
       self.destroy()
-      self.root.root.controller.deiconify()
-      self.root.root.controller.run()
+      self.root.root.deiconify()
+      self.root.root.run()
 
   def pin_unpin(self):
     self.topmost = not self.topmost
@@ -253,7 +263,7 @@ class CreateNewLog(Toplevel):
     self.conn = conn
 
     self.title("New log")
-    self.geometry(f"+{self.winfo_pointerx()}+{self.winfo_pointery()}")
+    self.geometry(f"+{self.winfo_pointerx()-200}+{self.winfo_pointery()}")
     self.resizable(False, False)
     self.transient(self.root)
 
@@ -271,8 +281,8 @@ class CreateNewLog(Toplevel):
     with open(USER_CONFIG, "r") as readf:
         data = json.load(readf)
         readf.close()
-    self.areas_values = data["subjects"]
-    self.areas_values_old_log = data["subjects"]
+    self.areas_values = data["data"]["subjects"]
+    self.areas_values_old_log = data["data"]["subjects"]
     self.areas_selected_value = tk.StringVar(value=self.areas_values[0])
     self.areas_selected_value_old_log = tk.StringVar(value=self.areas_values_old_log[0])
 
@@ -312,14 +322,14 @@ class CreateNewLog(Toplevel):
           with open(USER_CONFIG, "r") as readf:
             data = json.load(readf)
             readf.close()
-          self.areas_values = data["subjects"]
+          self.areas_values = data["data"]["subjects"]
           self.category_selected.set("Subjects")
 
       else:
         with open(USER_CONFIG, "r") as readf:
             data = json.load(readf)
             readf.close()
-        self.areas_values = data["subjects"]
+        self.areas_values = data["data"]["subjects"]
 
       self.combobox_areas_new.config(values=self.areas_values)
       self.areas_selected_value.set(self.areas_values[0])
@@ -367,13 +377,13 @@ class CreateNewLog(Toplevel):
           with open(USER_CONFIG, "r") as readf:
             data = json.load(readf)
             readf.close()
-          self.areas_values = data["subjects"]
+          self.areas_values = data["data"]["subjects"]
           self.category_selected.set("Subjects")
       else:
         with open(USER_CONFIG, "r") as readf:
             data = json.load(readf)
             readf.close()
-        self.areas_values_old_log = data["subjects"]
+        self.areas_values_old_log = data["data"]["subjects"]
 
       self.combobox_areas_old.config(values=self.areas_values_old_log)
       self.areas_selected_value_old_log.set(self.areas_values_old_log[0])
@@ -445,7 +455,7 @@ class CreateNewLog(Toplevel):
     self.destroy()
 
   def start_timer(self):
-    self.root.controller.withdraw()
+    self.root.withdraw()
     self.destroy()
     Timer(self, self.user_id, self.cursor, self.conn)
 
@@ -453,10 +463,9 @@ class Home(ttk.Frame):
   def __init__(self, root: tk.Frame, controller: tk.Tk, user_id: int, cursor, conn):
     super().__init__(root)
     self.controller = controller
+    self.root = root
     self.user_id = user_id
-    self.pack(side="left", anchor="n", expand=True, fill="both")
-    self.pack_propagate(False)
-    self.configure(width=(self.winfo_width()/2)+100)
+    self.pack(side="left", anchor="n", padx=(15, 7.5), pady=15, fill="both", expand=True)
 
     self.cursor = cursor
     self.conn = conn
@@ -464,8 +473,7 @@ class Home(ttk.Frame):
   def draw_table(self):
     title_frame = ttk.Frame(self)
     title_frame.pack(fill="x")
-    ttk.Label(title_frame, text="Current Week", font=("TkDefaultFont", 15, "bold")).pack(side="left")
-    ttk.Button(title_frame, text="New Log", command=lambda: self.create_new_log()).pack(side="right")
+    ttk.Label(title_frame, text="This Week", font=("TkDefaultFont", 15, "bold")).pack(side="left")
 
     current_day_frame = ttk.Frame(self)
     current_day_frame.pack(fill="x", pady=10)
@@ -473,24 +481,20 @@ class Home(ttk.Frame):
     ttk.Label(current_day_frame, text=datetime.today().strftime(FORMAT_DAY_STRING), font=("TkDefaultFont", 9, "bold")).pack(side="left")
 
     self.cursor.execute("PRAGMA table_info(sessions)")
-    headers_name = [row[1] for row in self.cursor.fetchall()][0:4]
+    headers_name = [row[1] for row in self.cursor.fetchall()][1:4]
     self.treeview = ttk.Treeview(
       self,
       columns=headers_name,
-      show="headings"
+      show="headings",
+      height=7,
     )
 
     # load and configure headers for table
     for heading in headers_name:
-      if heading.lower() == "id":
-        self.treeview.heading(heading, text=heading.upper())
-      else:
-        self.treeview.heading(heading, text=heading.capitalize())
+      self.treeview.heading(heading, text=heading.capitalize())
 
-      if heading.lower() == "time":
+      if heading.lower() in ["time", "date"]:
         self.treeview.column(heading, width=140, anchor='center')
-      elif heading.lower() in ["goal", "id"]:
-        self.treeview.column(heading, width=50, anchor='center')
       else:
         self.treeview.column(heading, width=140, anchor='w')
 
@@ -498,21 +502,22 @@ class Home(ttk.Frame):
     with open(USER_CONFIG, "r") as readf:
       reader = json.load(readf)
       readf.close()
-    goal_time = reader["session_goal"]
+    goal_time = reader["goals"]["daily_session_goal"]
     goal_in_seconds = time_to_seconds(int(goal_time[0]), int(goal_time[1]))
 
-    self.cursor.execute("SELECT * FROM sessions WHERE user_id = ? AND date >= ?", (self.user_id, self.get_monday_of_current_week(), ))
+    self.cursor.execute("SELECT * FROM sessions WHERE user_id = ? AND date >= ?", (self.user_id, get_current_week_dates()[0], ))
     for row in reversed(self.cursor.fetchall()):
-      values = list(row[0:4])
+      values = list(row[1:4])
 
-      seconds_current_row = values[2]
-      time_formatted = seconds_to_time(int(values[2]))
-      values[2] = FORMAT_TIME_STRING.replace("%h", f"{time_formatted[0]:02d}").replace("%m", f"{time_formatted[1]:02d}").replace("%s", f"{time_formatted[2]:02d}")
+      seconds_current_row = values[1]
+      time_formatted = seconds_to_time(int(values[1]))
+      values[1] = FORMAT_TIME_STRING.replace("%h", f"{time_formatted[0]:02d}").replace("%m", f"{time_formatted[1]:02d}").replace("%s", f"{time_formatted[2]:02d}")
 
       self.treeview.insert(
         "",
         tk.END,
         values=values,
+        iid=row[0],
         tags=(True if int(seconds_current_row) >= int(goal_in_seconds) else False))
       
     self.treeview.tag_configure(True, foreground="green")
@@ -524,27 +529,3 @@ class Home(ttk.Frame):
       
   def create_new_log(self):
     CreateNewLog(self, self.user_id, self.cursor, self.conn)
-
-  def get_monday_of_current_week(self, target_date: date = None) -> date:
-    if target_date is None:
-        today = date.today()
-    else:
-        today = target_date
-
-    current_weekday = today.weekday()
-    days_since_monday = current_weekday
-    monday_date = today - timedelta(days=days_since_monday)
-
-    return monday_date
-  
-  def get_sunday_of_current_week(self, target_date: date = None) -> date:
-    if target_date is None:
-        today = date.today()
-    else:
-        today = target_date
-
-    current_weekday = today.weekday()
-    days_until_sunday = 6 - current_weekday
-    sunday_date = today + timedelta(days=days_until_sunday)
-
-    return sunday_date
