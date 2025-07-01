@@ -12,7 +12,7 @@ Built with **Python** and **Tkinter**, it offers a distraction-free interface to
 - No internet needed
 
 ## Preview 
-![App Dashboard](screenshot_2.png)
+![App Dashboard](screenshot_3.png)
 
 ## Installation
 
