@@ -1,6 +1,1 @@
-2.0.1
-
-change version here
-change version in version.py
-clean user_config.json
-change screenshot
+2.1.0
