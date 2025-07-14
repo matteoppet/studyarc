@@ -8,6 +8,7 @@ from core.paths import USER_CONFIG, ICON_PATH
 from ui.style import StyleManager
 from utils.utils import time_to_seconds, seconds_to_time, get_current_week_dates
 from tkcalendar import Calendar
+import winsound
 
 FORMAT_TIME_STRING = "%h:%m:%s"
 FORMAT_DAY_STRING = "%Y-%m-%d"
@@ -22,12 +23,13 @@ class Timer(Toplevel):
 
     self.title("Session Timer")
     self.minsize(220, 150)
-    self.resizable(False, False)
     self.geometry(f"+{self.winfo_pointerx()}+{self.winfo_pointery()}")
     self.topmost = False
     self.attributes("-topmost", self.topmost)
     self.configure(bg=StyleManager.get_item_color("bg"))
     self.protocol("WM_DELETE_WINDOW", lambda: self.close())
+
+    self.pause = False
 
     self.reset()
 
@@ -39,12 +41,35 @@ class Timer(Toplevel):
     frame_tasks.pack(side="top", fill="both", padx=10)
     ttk.Label(frame_tasks, text="Task Manager", font=("TkDefaultFont", 16, "bold")).pack(side="top", anchor="nw", pady=10)
 
-    self.listbox_tasks = tk.Listbox(frame_tasks, height=7, selectmode="single")
-    self.listbox_tasks.pack(side="top", fill="both", expand=True)
+    self.cursor.execute("PRAGMA table_info(tasks)")
+    headers_name = [row[1] for row in self.cursor.fetchall()][1:3]
+    self.treeview = ttk.Treeview(
+      frame_tasks,
+      columns=headers_name,
+      show="headings"
+    )
 
-    ttk.Button(frame_tasks, text="Complete Task", command=lambda: self.complete_task()).pack(side="top", fill="x", pady=(10, 5))
-    ttk.Button(frame_tasks, text="Add Task", command=lambda: self.add_task()).pack(side="top", fill="x")
-    ttk.Button(frame_tasks, text="Delete Task", command=lambda: self.delete_task()).pack(side="top", fill="x", pady=(5,10))
+    for heading in headers_name:
+      self.treeview.heading(heading, text=heading.title())
+      if heading.lower() == "status":
+        self.treeview.column(heading, anchor='center')
+
+    self.treeview.pack(side="top", fill="both")
+
+    self.collapse_menu = tk.Menu(self, tearoff=0)
+    self.collapse_menu.add_command(label="Delete", command=lambda: self.delete_task())
+
+    menustatus = tk.Menu(self.collapse_menu, tearoff=0)
+    menustatus.add_command(label="Not Started", command=lambda: self.change_status("Not Started"))
+    menustatus.add_command(label="In Progress", command=lambda: self.change_status("In Progress"))
+    menustatus.add_command(label="Done", command=lambda: self.change_status("Done"))
+
+    self.collapse_menu.add_cascade(label="Status", menu=menustatus)
+    self.treeview.bind("<Button-3>", self.open_collapse_menu)
+
+    self.populate_tasks()
+
+    ttk.Button(frame_tasks, text="Add Task", command=lambda: self.add_task()).pack(side="top", fill="x", pady=10)
 
     ttk.Separator(self, orient="horizontal").pack(side="top", fill="x")
 
@@ -52,55 +77,75 @@ class Timer(Toplevel):
     frame_buttons.pack(side="top", fill="x", padx=10, pady=10)
     ttk.Button(frame_buttons, text="Close", command=lambda: self.close()).pack(side="right")
     ttk.Button(frame_buttons, text="Reset", command=lambda: self.reset()).pack(side="right", padx=5)
+    self.pause_button = ttk.Button(frame_buttons, text="Pause", command=lambda: self.pause_timer())
+    self.pause_button.pack(side="right")
     self.pin_button = ttk.Button(frame_buttons, text="Pin", command=lambda: self.pin_unpin())
     self.pin_button.pack(side="left")
 
+  def populate_tasks(self):
+    if self.root.category_selected.get().lower() == "projects":
+      id_project, project_selected = self.root.areas_selected_value.get().split(": ")
+
+      self.cursor.execute("SELECT id, name, status FROM tasks WHERE project_id = ? AND user_id = ?", (id_project, self.user_id,))
+      for row in self.cursor.fetchall():
+        self.treeview.insert("", tk.END if row[2].lower() == "done" else 0, values=row[1:], iid=row[0], tags=(row[2].lower(),))
+
   def add_task(self):
     new_task_name = askstring("New Task", "What's is your new task?")
-    self.listbox_tasks.insert(0, new_task_name)
+
+    if new_task_name is not None:
+      self.cursor.execute("INSERT INTO tasks (name, status, project_id, user_id) VALUES (?, ?, ?, ?)", (new_task_name, "Not Started", self.root.areas_selected_value.get().split(": ")[0], self.user_id))
+      self.conn.commit()
+      new_id = self.cursor.lastrowid
+
+      self.treeview.insert("", 0, values=(new_task_name, "Not Started"), iid=new_id, tags=("Not Started".lower(),))
 
   def delete_task(self):
-    selection = self.listbox_tasks.curselection()
-    if selection:
-      index = selection[0]
-      self.listbox_tasks.delete(index)
+    id_task = self.treeview.selection()[0]
+    self.cursor.execute("DELETE FROM tasks WHERE id = ? AND project_id = ? AND user_id = ?", (id_task, self.root.areas_selected_value.get().split(": ")[0], self.user_id))
+    self.conn.commit()
+    self.treeview.delete(id_task)
 
-  def complete_task(self):
-    selection = self.listbox_tasks.curselection()
-    if selection:
-      index = selection[0]
-      text = self.listbox_tasks.get(index)
-      
-      if str(text).find("✓") == -1:
-        self.listbox_tasks.delete(index)
-        self.listbox_tasks.insert(tk.END, f" ✓ {text}")
-
-  def play_gif(self):
-    self.frame_gif = (self.frame_gif + 1) % len(self.gif_frames)
-    self.canvas.itemconfig(self.gif_background, image=self.gif_frames[self.frame_gif])
-    self.id_timer_gif = self.after(100, self.play_gif)
+  def change_status(self, new_status):
+    id_task = self.treeview.selection()[0]
+    name = self.treeview.item(id_task, "values")[0]
+    self.cursor.execute("UPDATE tasks SET status = ? WHERE id = ? AND project_id = ? AND user_id = ?", (new_status, id_task, self.root.areas_selected_value.get().split(": ")[0], self.user_id))
+    self.conn.commit()
+    self.treeview.delete(id_task)
+    self.treeview.insert("", 0 if new_status.lower() in ["in progress", "not started"] else tk.END, iid=id_task, values=(name, new_status), tags=(new_status.lower(),))
 
   def update_timer(self):
     if not self.check_goal_reached():
-      if self.timer_seconds != 59:
-        self.timer_seconds += 1
-      else:
-        self.timer_seconds = 0
-        self.timer_minutes += 1
 
-        if self.timer_minutes == 60:
-          self.timer_minutes = 0
-          self.timer_hours += 1
+      if not self.pause:
+        if self.timer_seconds != 59:
+          self.timer_seconds += 1
+        else:
+          self.timer_seconds = 0
+          self.timer_minutes += 1
+
+          if self.timer_minutes == 60:
+            self.timer_minutes = 0
+            self.timer_hours += 1
 
       self.timer_text.configure(text=f"{self.timer_hours:02d}:{self.timer_minutes:02d}:{self.timer_seconds:02d}")
       self.id_timer = self.after(1000, self.update_timer)
     else:
+      winsound.PlaySound("SystemAsterisk", winsound.SND_ALIAS)
       if not messagebox.askyesno("Session Completed", "Congratulation, you have reached your goal!\n\nDo you want to start a new timer?"):
         self.destroy()
-        self.root.root.controller.deiconify()
-        self.root.root.controller.run()
+        self.root.root.deiconify()
+        self.root.root.run()
       else:
         self.reset()
+
+  def pause_timer(self):
+    if self.pause:
+      self.pause = False
+      self.pause_button.config(text="Pause")
+    else:
+      self.pause = True
+      self.pause_button.config(text="Continue")
 
   def check_goal_reached(self):
     if self.goal_hours != 0 or self.goal_minutes != 0:
@@ -111,6 +156,12 @@ class Timer(Toplevel):
         self.save()
         return True
     else: return False
+
+  def open_collapse_menu(self, event):
+    item_id = self.treeview.identify_row(event.y)
+    if item_id:
+      self.treeview.selection_set(item_id)
+      self.collapse_menu.post(event.x_root, event.y_root)
 
   def save(self):
     def check_new_week(today_date, last_day_recorded):
@@ -210,6 +261,8 @@ class Timer(Toplevel):
     if not self.check_goal_reached():
       if messagebox.askyesno("Closing Timer", "You have not reached your goal estabilished, are you sure you want to end the session?\n\nCurrent progress will be saved."):
         confirm_close = True
+    else:
+      confirm_close = True
 
     if confirm_close or (self.goal_hours == 0 and self.goal_minutes == 0):
       self.save()
@@ -448,11 +501,10 @@ class CreateNewLog(Toplevel):
       self.cursor.execute("UPDATE projects SET time = time + ? WHERE ID = ? AND user_id = ?", (time_to_seconds(hours, minutes), ID, user_id))
       self.conn.commit()
 
-    self.root.clear_widgets()
-    self.root.draw_table()
-
     messagebox.showinfo("Log recorded", "The log inserted has been recorded successfully")
     self.destroy()
+    
+    self.root.run()
 
   def start_timer(self):
     self.root.withdraw()
@@ -471,6 +523,8 @@ class Home(ttk.Frame):
     self.conn = conn
 
   def draw_table(self):
+    self.clear_widgets()
+
     title_frame = ttk.Frame(self)
     title_frame.pack(fill="x")
     ttk.Label(title_frame, text="This Week", font=("TkDefaultFont", 15, "bold")).pack(side="left")
@@ -526,6 +580,4 @@ class Home(ttk.Frame):
   def clear_widgets(self):
     for widgets in self.winfo_children():
       widgets.destroy()
-      
-  def create_new_log(self):
-    CreateNewLog(self, self.user_id, self.cursor, self.conn)
+    

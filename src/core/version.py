@@ -2,7 +2,7 @@ import urllib.request
 import sys
 import os
 
-CURRENT_VERSION = "2.1.0"
+CURRENT_VERSION = "2.2.0"
 REMOTE_URL = "https://raw.githubusercontent.com/matteoppet/studyarc/main/data/version.txt"
 
 def get_remote_version(url):

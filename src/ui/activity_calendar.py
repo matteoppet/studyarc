@@ -29,7 +29,7 @@ class ActivityCalendar(ttk.Frame):
     scrollable_area_frame.pack(anchor="center", fill="x", expand=True)
 
     self.canvas = tk.Canvas(
-            scrollable_area_frame, height=170, borderwidth=1, relief="solid")
+            scrollable_area_frame, height=150, borderwidth=1, relief="solid")
     self.h_scrollbar = ttk.Scrollbar(scrollable_area_frame, orient="horizontal", command=self.canvas.xview)
     self.canvas.configure(xscrollcommand=self.h_scrollbar.set)
 
@@ -71,7 +71,5 @@ class ActivityCalendar(ttk.Frame):
 
       count_weeks = 1
       count_name_month += 1
-
-    self.canvas.create_text(200, total_content_height+75, text="Each column represent a week, and each row represent a day.")
 
     self.canvas.config(scrollregion=(0, 0, total_content_width+20, total_content_height))

@@ -8,6 +8,8 @@ class Database:
     self.conn = sqlite3.connect(self.path_database, timeout=10)
     self.cursor = self.conn.cursor()
 
+    
+
     self.create_tables()
 
   def create_tables(self) -> None:
