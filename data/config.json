@@ -1,7 +1,9 @@
 {
     "subjects": {
-        "Math": 60,
-        "Physics": 0
+        "Math": 6785,
+        "Physics": 34256,
+        "Arduino": 4356,
+        "Biology": 3456
     },
     "project_folders": {
         "Python": true,

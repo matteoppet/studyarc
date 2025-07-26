@@ -3,6 +3,8 @@
 **Track your study time, manager your subjects and projects, and stay focused**
 Lightweight. Offline. No distractions.
 
+![StudyArc Screenshot](./assets/screenshot_1.png)  
+
 ## Features
 - **Pomodoro Timer** with customizable study length
 - **Subjects** – Add and track time spent on each subject

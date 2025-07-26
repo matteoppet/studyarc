@@ -50,8 +50,3 @@ class StudyArc(tk.Tk):
 if __name__ == "__main__":
   app = StudyArc()
   app.run()
-
-  # TODO: make possibility to log old log
-  # TODO: project page, move project to a folder
-
-  # TODO: highlight project in progress, highlight days that you studied over your objective in ther current week widget
