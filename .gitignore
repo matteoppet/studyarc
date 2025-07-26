@@ -1,14 +1,9 @@
-/src/*.csv
-/src/*json
-/src/*.yaml
 /env
-/notes_new_release.txt
 src/__pycache__
 src/core/__pycache__
 src/ui/__pycache__
 src/utils/__pycache__
+build
+dist
 __pycache__
-/builds
-build.bat
-.env
-data/database.db
+main.spec

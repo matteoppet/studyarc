@@ -1,0 +1,14 @@
+{
+    "subjects": {
+        "Math": 60,
+        "Physics": 0
+    },
+    "project_folders": {
+        "Python": true,
+        "NASA": true
+    },
+    "daily_session_goal": [
+        0,
+        30
+    ]
+}
