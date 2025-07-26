@@ -52,4 +52,5 @@ class Database:
                         FOREIGN KEY(project_id) REFERENCES projects(id) on DELETE CASCADE
                         FOREIGN KEY(user_id) REFERENCES users(id) on DELETE CASCADE
                         )""")
+
     self.conn.commit()

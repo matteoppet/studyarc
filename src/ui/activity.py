@@ -107,9 +107,10 @@ class CurrentWeek(tk.Frame):
 
     database_dates = [row[0] for row in rows]
     current_week_dates = [monday + timedelta(days=count) for count in range(0,7)]
+    
     for count in range(0, 7):
       current_date = current_week_dates[count]
-
+    
       if str(current_date) in database_dates: # check if a date in database already exists, if not creates an empty label
         row = rows[database_dates.index(str(current_date))]
         frame_current_day = tk.Frame(week_days_frame, bg=COLOR_BACKGROUND)
