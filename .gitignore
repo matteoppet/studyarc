@@ -7,4 +7,5 @@ build
 dist
 __pycache__
 main.spec
-frontend
+/frontend/*
+!/frontend/CHANGELOG.md
