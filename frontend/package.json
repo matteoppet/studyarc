@@ -1,11 +1,11 @@
 {
-  "version": "1.0.2",
+  "version": "1.0.3",
   "devDependencies": {
     "standard-version": "^9.5.0"
   },
   "scripts": {
     "version": "standard-version",
-    "build:exe": "pyinstaller --clean main.spec",
+    "build:exe": "pyinstaller --clean ../main.spec",
     "release": "npm run version && npm run build:exe && node release-to-github.js"
   }
 }
