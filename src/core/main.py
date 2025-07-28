@@ -50,3 +50,6 @@ class StudyArc(tk.Tk):
 if __name__ == "__main__":
   app = StudyArc()
   app.run()
+
+
+# to run: cd automations -> npm run release -> git push --follow-tags

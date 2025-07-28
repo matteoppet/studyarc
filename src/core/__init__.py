@@ -18,7 +18,7 @@ if getattr(sys, "frozen", False): # from compiled exe
   CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
   DATABASE_FILE = os.path.join(CONFIG_DIR, "database.db")
 else: # from script
-  CONFIG_DIR = os.path.expanduser("../data")
+  CONFIG_DIR = os.path.expanduser("../database")
   CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
   DATABASE_FILE = os.path.join(CONFIG_DIR, "database.db")
 

@@ -455,6 +455,9 @@ class Projects(tk.Frame):
 
   def add_folder(self):
     new_folder_name = askstring("Creation Folder", "Insert folder name")
+    
+    if new_folder_name is None or new_folder_name == "":
+      return
 
     with open(CONFIG_FILE, "r") as project_folders_file:
       data = json.load(project_folders_file)
