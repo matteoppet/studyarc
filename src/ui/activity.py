@@ -4,7 +4,7 @@ from tkinter import ttk
 from datetime import timedelta, date
 
 from core.settings import COLOR_BACKGROUND, COLOR_FOREGROUND
-from utils.utils import get_time_from_seconds, get_seconds_from_time, resource_path
+from utils.utils import get_time_from_seconds, get_seconds_from_time, resource_path, format_time
 from core.__init__ import CONFIG_FILE
 
 import json
@@ -117,11 +117,12 @@ class CurrentWeek(tk.Frame):
         frame_current_day.pack(side="top", fill="x", pady=(0,5))
         tk.Label(frame_current_day, text=f"{list_days[count]} {row[0].split("-")[2]}:", bg=COLOR_BACKGROUND, fg=COLOR_FOREGROUND, anchor="e", width=WIDTH_DAYS_LABEL, font=("TkDefaultFont", 9, "bold")).pack(side="left")
         hours, minutes, seconds = get_time_from_seconds(row[1])
+        formatted_time = format_time(hours, minutes, seconds)
 
         if int(row[1]) >= daily_session_goal_seconds:
-          tk.Label(frame_current_day, text=f"{hours:02d}h {minutes:02d}m {seconds:02d}s", bg=COLOR_BACKGROUND, fg="green", anchor="w").pack(side="left", fill="x", padx=10)
+          tk.Label(frame_current_day, text=formatted_time, bg=COLOR_BACKGROUND, fg="green", anchor="w").pack(side="left", fill="x", padx=10)
         else:
-          tk.Label(frame_current_day, text=f"{hours:02d}h {minutes:02d}m {seconds:02d}s", bg=COLOR_BACKGROUND, fg=COLOR_FOREGROUND, anchor="w").pack(side="left", fill="x", padx=10)
+          tk.Label(frame_current_day, text=formatted_time, bg=COLOR_BACKGROUND, fg=COLOR_FOREGROUND, anchor="w").pack(side="left", fill="x", padx=10)
 
       else:
         current_day = monday + timedelta(days=count)
