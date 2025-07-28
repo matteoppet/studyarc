@@ -211,7 +211,8 @@ class ProjectOVerview(tk.Toplevel):
       self.cursor.execute("UPDATE projects SET name = ?, status = ? WHERE id = ? AND user_id = ?", (new_title, new_status, self.id_project, self.user_id))
       self.conn.commit()
       hours, minutes, seconds = get_time_from_seconds(int(self.data_project[3]))
-      self.treeview_projects.item(self.id_project, text=new_title, values=[new_status,f"{hours}h {minutes:02d}m {seconds:02d}s"])
+      formatted_time = format_time(hours, minutes, seconds)
+      self.treeview_projects.item(self.id_project, text=new_title, values=[new_status,formatted_time])
 
       if new_status.lower() == "done":
         self.treeview_projects.move(self.id_project, self.treeview_projects.parent(self.id_project) if self.data_project[5] else "", tk.END)
@@ -287,7 +288,8 @@ class Projects(tk.Frame):
     count = 0
     for subject, time in data["subjects"].items():
       hours, minutes, seconds = get_time_from_seconds(int(time))
-      self.treeview_subjects.insert("", tk.END, iid=count, text=subject, values=[f"{hours:02d}h {minutes:02d}m {seconds:02d}s"])
+      formatted_time = format_time(hours, minutes, seconds)
+      self.treeview_subjects.insert("", tk.END, iid=count, text=subject, values=[formatted_time])
       count += 1
 
     controls_frame = tk.Frame(frame)
@@ -444,7 +446,8 @@ class Projects(tk.Frame):
     self.cursor.execute("INSERT INTO projects (name, status, time, folder, user_id) VALUES (?, ?, ?, ?, ?)", (new_project_name, "Not Started", 0, folder_selected, self.user_id,))
     self.conn.commit()
     inserted_id = self.cursor.lastrowid
-    self.treeview_projects.insert("" if folder_iid is None else folder_iid, project_in_progress, iid=inserted_id, text=new_project_name, values=["Not Started", "00h 00m 00s"])
+    formatted_time = format_time(0,0,0)
+    self.treeview_projects.insert("" if folder_iid is None else folder_iid, project_in_progress, iid=inserted_id, text=new_project_name, values=["Not Started", formatted_time])
     self.new_project_name.set(value="")
 
   def load_project_folders(self):
@@ -455,7 +458,7 @@ class Projects(tk.Frame):
 
   def add_folder(self):
     new_folder_name = askstring("Creation Folder", "Insert folder name")
-    
+
     if new_folder_name is None or new_folder_name == "":
       return
 
