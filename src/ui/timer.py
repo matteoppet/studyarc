@@ -10,12 +10,13 @@ from datetime import date
 import json
 
 class Timer(tk.Frame):
-  def __init__(self, root, controller, cursor, conn):
+  def __init__(self, root, controller, cursor, conn, user_id):
     tk.Frame.__init__(self, root)
     self.root = root
     self.controller = controller
     self.cursor = cursor
     self.conn = conn
+    self.user_id = user_id
 
     self.config(bg=COLOR_BACKGROUND, borderwidth=1, relief="solid")
     self.pack(side="top", anchor="nw", padx=25, pady=5, expand=True, fill="both")
@@ -151,8 +152,10 @@ class Timer(tk.Frame):
       self.combobox_values["values"] = list(data["subjects"].keys())
       self.working_on_selected.set(value="")
     else:
-      test = ["StudyArc", "Pacman"]      
-      self.combobox_values["values"] = test
+      self.cursor.execute("SELECT id, name FROM projects WHERE user_id = ?", (self.user_id,))
+      rows = self.cursor.fetchall()
+
+      self.combobox_values["values"] = [f"{row[0]}. {row[1]}" for row in rows]
       self.working_on_selected.set(value="")
 
   def save(self):
@@ -161,20 +164,29 @@ class Timer(tk.Frame):
     working_on_category_selected = self.working_on_category_selected.get()
     working_on_selected = self.working_on_selected.get()
     today_date = date.today()
-    user_id = 1
 
     if working_on_category_selected != "" and working_on_selected != "":
       if working_on_category_selected.lower() == "subjects":
         with open(CONFIG_FILE, "r") as read_config_file:
           data = json.load(read_config_file)
 
-        data["subjects"][working_on_selected] = total_seconds_time_studied
+        data["subjects"][working_on_selected] += total_seconds_time_studied
 
         with open(CONFIG_FILE, "w") as updated_config_file:
           updated_config_file.write(json.dumps(data, indent=4))
+      elif working_on_category_selected.lower() == "projects":
+        self.cursor.execute("UPDATE projects SET time = time + ? WHERE user_id = ? AND id = ?", (total_seconds_time_studied, self.user_id, int(working_on_selected.split(". ")[0])))
+        self.conn.commit()
 
-    self.cursor.execute("INSERT INTO sessions (date, time, description, user_id) VALUES (?, ?, ?, ?)", (today_date, total_seconds_time_studied, working_on_selected, user_id))
-    self.conn.commit()
+    self.cursor.execute("SELECT id FROM sessions WHERE date = ? AND user_id = ?", (today_date, self.user_id))
+    rows = self.cursor.fetchall()
+
+    if len(rows) == 0:
+      self.cursor.execute("INSERT INTO sessions (date, time, description, user_id) VALUES (?, ?, ?, ?)", (today_date, total_seconds_time_studied, working_on_selected, self.user_id))
+      self.conn.commit()
+    else:
+      self.cursor.execute("UPDATE sessions SET time = time + ? WHERE date = ? AND user_id = ?", (total_seconds_time_studied, today_date, self.user_id))
+      self.conn.commit()
 
   def add_task(self):
     name_new_task = self.name_new_task_stringvar.get()

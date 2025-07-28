@@ -10,3 +10,4 @@ main.spec
 node_modules
 package-lock.json
 package.json
+release-to-github.js

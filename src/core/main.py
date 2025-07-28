@@ -37,7 +37,7 @@ class StudyArc(tk.Tk):
 
     tk.Label(frame_left, text="Study Dashboard", font=("TkDefaultFont", 22, "bold"), anchor="w", bg=COLOR_BACKGROUND_SIDEPANEL).pack(side="top", fill="x", pady=15, padx=25)
 
-    self.timer_frame = Timer(frame_left, self, self.cursor, self.conn)
+    self.timer_frame = Timer(frame_left, self, self.cursor, self.conn, self.user_id)
     self.current_week_activity = CurrentWeek(frame_left, self.cursor, self.conn, self.user_id)
 
     frame_right = tk.Frame(frame_timer_projects)
