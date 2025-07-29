@@ -4,6 +4,7 @@ from tkinter import ttk
 from datetime import datetime
 import json
 from tkinter import messagebox
+from tkinter import filedialog
 
 from core.settings import COLOR_BACKGROUND, COLOR_FOREGROUND
 from core.__init__ import CONFIG_FILE
@@ -129,6 +130,37 @@ class LogOldSession(tk.Toplevel):
       self.combobox_subjects["values"] = [f"{row[0]}. {row[1]}" for row in rows]
       self.working_on.set(value="")
 
+
+def export_logs_to_csv(cursor, user_id):
+  file_to_write = filedialog.asksaveasfile(
+    mode='w',
+    defaultextension=".csv", 
+    filetypes=[("CSV files", "*.csv")]
+  )
+  
+
+  if file_to_write:
+    cursor.execute(f"PRAGMA table_info(sessions)")
+    columns = [row[1] for row in cursor.fetchall()]
+    header_str = ""
+    for column in columns:
+      header_str += f"{column},"
+    header_str += "\n"
+
+    file_to_write.write(header_str)
+
+    cursor.execute("SELECT * FROM sessions WHERE user_id = ?", (int(user_id),))
+    logs = cursor.fetchall()
+
+    for log in logs:
+      log_str = ""
+      for data in log:
+        log_str += f"{data},"
+      log_str += "\n"
+
+      file_to_write.write(log_str)
+
+    file_to_write.close()
 
 def get_time_from_seconds(seconds: int) -> tuple[int, int, int]:
   seconds = int(seconds)

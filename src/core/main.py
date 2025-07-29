@@ -7,7 +7,7 @@ from ui.activity import CurrentWeek
 
 from core.database import Database
 from core.settings import COLOR_BACKGROUND_SIDEPANEL
-from utils.utils import resource_path, LogOldSession
+from utils.utils import resource_path, LogOldSession, export_logs_to_csv
 
 class StudyArc(tk.Tk):
   def __init__(self):
@@ -43,7 +43,9 @@ class StudyArc(tk.Tk):
     
     frame_buttons = tk.Frame(frame_left, bg=COLOR_BACKGROUND_SIDEPANEL)
     frame_buttons.pack(side="top", fill="x", padx=25, pady=(0,20))
-    tk.Button(frame_buttons, text="Log session", command=lambda: LogOldSession(self, self.cursor, self.conn, self.user_id)).pack(side="left")
+    WIDTH_BUTTONS = 10
+    tk.Button(frame_buttons, text="Log session", command=lambda: LogOldSession(self, self.cursor, self.conn, self.user_id), width=WIDTH_BUTTONS).pack(side="left")
+    tk.Button(frame_buttons, text="Export to CSV", command=lambda: export_logs_to_csv(self.cursor, self.user_id), width=WIDTH_BUTTONS).pack(side="left", padx=10)
 
     frame_right = tk.Frame(frame_timer_projects)
     frame_right.pack(side="left", fill="both", expand=True)
