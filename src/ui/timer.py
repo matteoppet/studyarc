@@ -18,6 +18,8 @@ class Timer(tk.Frame):
     self.conn = conn
     self.user_id = user_id
 
+    self.controller.protocol("WM_DELETE_WINDOW", lambda: self.check_timer())
+
     self.config(bg=COLOR_BACKGROUND, borderwidth=1, relief="solid")
     self.pack(side="top", anchor="nw", padx=25, pady=5, expand=True, fill="both")
     
@@ -33,6 +35,7 @@ class Timer(tk.Frame):
     self.tasks = []
 
     self.pause_timer = False
+    self.timer_going = False
 
     self.run()
 
@@ -119,6 +122,8 @@ class Timer(tk.Frame):
       self.pause_timer = False
       self.id_timer = self.after(1000, self.update_timer)
 
+      self.timer_going = True
+
       self.start_button.config(text="Pause")
     elif self.start_button["text"].lower() == "pause":
 
@@ -136,7 +141,8 @@ class Timer(tk.Frame):
         self.id_timer = self.after(1000, self.update_timer)
 
       else:
-        self.save()
+        self.timer_going = False
+        self.save(self.time_minutes_var_selected.get()*60)
         messagebox.showinfo("Study Session Ended", "Study session completed. Take a break before the next session.")
         self.after_cancel(self.id_timer)
         self.id_timer = None
@@ -158,9 +164,8 @@ class Timer(tk.Frame):
       self.combobox_values["values"] = [f"{row[0]}. {row[1]}" for row in rows]
       self.working_on_selected.set(value="")
 
-  def save(self):
-    time_studied = self.time_minutes_var_selected.get()
-    total_seconds_time_studied = time_studied * 60
+  def save(self, time_studied_seconds):
+    total_seconds_time_studied = time_studied_seconds
     working_on_category_selected = self.working_on_category_selected.get()
     working_on_selected = self.working_on_selected.get()
     today_date = date.today()
@@ -177,7 +182,7 @@ class Timer(tk.Frame):
       elif working_on_category_selected.lower() == "projects":
         self.cursor.execute("UPDATE projects SET time = time + ? WHERE user_id = ? AND id = ?", (total_seconds_time_studied, self.user_id, int(working_on_selected.split(". ")[0])))
         self.conn.commit()
-        
+
     self.cursor.execute("INSERT INTO sessions (date, time, description, user_id) VALUES (?, ?, ?, ?)", (today_date, total_seconds_time_studied, working_on_selected, self.user_id))
     self.conn.commit()
 
@@ -203,3 +208,15 @@ class Timer(tk.Frame):
         id, name = selected_item.split(". ")
         del self.tasks[int(id)]
         self.listbox_tasks.delete(int(id))
+
+  def check_timer(self):
+    if self.timer_going:
+      if self.timer_minutes_var != 0 and self.timer_seconds_var != 0:
+        self.pause_timer = True
+        if messagebox.askyesno("Session not ended", "The timer is still running. Are you sure you want to exit?\n\nCurrent progress will be saved."):
+          count_minutes_session = self.time_minutes_var_selected.get() - self.timer_minutes_var
+          self.save(count_minutes_session*60)
+          self.controller.destroy()
+        else:
+          self.pause_timer = False
+          self.id_timer = self.after(1000, self.update_timer)
