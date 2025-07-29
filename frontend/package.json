@@ -5,7 +5,7 @@
   },
   "scripts": {
     "version": "standard-version",
-    "patch-changelog": "node scripts/patch-changelog.js",
+    "patch-changelog": "node patch-changelog.js",
     "build:exe": "pyinstaller --clean ../main.spec",
     "release": "npm run version && npm run patch-changelog && git add CHANGELOG.md && git commit -m \"chore: patch changelog\" && git push && git push --tags && npm run build:exe && node release-to-github.js"
   }
