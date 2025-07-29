@@ -132,7 +132,8 @@ class ProjectOVerview(tk.Toplevel):
   def run_logs(self, frame):
     tk.Label(frame, text="Logs", font=("TkDefaultFont", 13, "bold"), anchor="w").pack(side="top", fill="x", pady=10, padx=10)
 
-    self.cursor.execute("SELECT date, time FROM sessions WHERE user_id = ? AND description = ?", (self.user_id, self.data_project[1]))
+    print(self.data_project[1])
+    self.cursor.execute("SELECT date, time FROM sessions WHERE user_id = ? AND description = ?", (self.user_id, f"{self.data_project[0]}. {self.data_project[1]}"))
     sessions = self.cursor.fetchall()
 
     if len(sessions) == 0:
@@ -146,9 +147,11 @@ class ProjectOVerview(tk.Toplevel):
       treeview_logs.column("Time", anchor="center")
       treeview_logs.column("#0", anchor="center")
 
-      self.cursor.execute("SELECT date, time FROM sessions WHERE user_id = ? AND description = ?", (self.user_id, self.data_project[1]))
+      self.cursor.execute("SELECT date, time FROM sessions WHERE user_id = ? AND description = ?", (self.user_id, f"{self.data_project[0]}. {self.data_project[1]}"))
       for row in self.cursor.fetchall():
-        treeview_logs.insert("", 0, text=row[0], values=[row[1]])
+        hours, minutes, seconds = get_time_from_seconds(row[1])
+        time_formatted = format_time(hours, minutes, seconds)
+        treeview_logs.insert("", 0, text=row[0], values=[time_formatted])
 
   def add_tasks(self):
     new_task_name = self.new_task_name.get()
