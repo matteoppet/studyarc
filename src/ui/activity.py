@@ -98,6 +98,7 @@ class CurrentWeek(tk.Frame):
     week_days_frame.pack(side="top", fill="x", padx=10, anchor="n")
 
     WIDTH_DAYS_LABEL = 13
+    WIDTH_TIME_LABEL = 10
 
     with open(CONFIG_FILE, "r") as config_file_read:
       data = json.load(config_file_read)
@@ -107,18 +108,29 @@ class CurrentWeek(tk.Frame):
     for count in range(0, 7):
       current_date = current_week_dates[count]
 
-      self.cursor.execute("SELECT time FROM sessions WHERE date = ? AND user_id = ?", (current_date, self.user_id))
+      self.cursor.execute("SELECT date, time, description FROM sessions WHERE date = ? AND user_id = ?", (current_date, self.user_id))
       rows = self.cursor.fetchall()
+
+      descriptions = {row[0]: [] for row in rows}
+      for row in rows:
+        if row[2] != '':
+          try:
+            name = row[2].split(". ")[1]
+            descriptions[row[0]].append(name)
+          except:
+            descriptions[row[0]].append(row[2])
+
+          descriptions[row[0]].append("|")
 
       if rows == []:
         current_day = monday + timedelta(days=count)
         frame_current_day = tk.Frame(week_days_frame, bg=COLOR_BACKGROUND)
         frame_current_day.pack(side="top", fill="x", pady=(0,5))
         tk.Label(frame_current_day, text=f"{list_days[count]} {str(current_day).split("-")[2]}:", bg=COLOR_BACKGROUND, fg=COLOR_FOREGROUND, anchor="e", width=WIDTH_DAYS_LABEL, font=("TkDefaultFont", 9, "bold")).pack(side="left")
-        tk.Label(frame_current_day, text="No data", bg=COLOR_BACKGROUND, fg=COLOR_FOREGROUND, anchor="w").pack(side="left", fill="x", padx=10)
+        tk.Label(frame_current_day, text="No data", bg=COLOR_BACKGROUND, fg=COLOR_FOREGROUND, anchor="center", width=WIDTH_TIME_LABEL).pack(side="left", padx=10)
 
       else:
-        total_time_in_seconds = sum([row[0] for row in rows])
+        total_time_in_seconds = sum([row[1] for row in rows])
         hours, minutes, seconds = get_time_from_seconds(total_time_in_seconds)
         formatted_time = format_time(hours, minutes, seconds)
 
@@ -127,9 +139,11 @@ class CurrentWeek(tk.Frame):
         tk.Label(frame_current_day, text=f"{list_days[count]} {str(current_date).split("-")[2]}:", bg=COLOR_BACKGROUND, fg=COLOR_FOREGROUND, anchor="e", width=WIDTH_DAYS_LABEL, font=("TkDefaultFont", 9, "bold")).pack(side="left")
         
         if total_time_in_seconds >= daily_session_goal_seconds:
-          tk.Label(frame_current_day, text=formatted_time, bg=COLOR_BACKGROUND, fg="green", anchor="w").pack(side="left", fill="x", padx=10)
+          tk.Label(frame_current_day, text=formatted_time, bg=COLOR_BACKGROUND, fg="green", anchor="center", width=WIDTH_TIME_LABEL).pack(side="left", padx=10)
         else:
-          tk.Label(frame_current_day, text=formatted_time, bg=COLOR_BACKGROUND, fg=COLOR_FOREGROUND, anchor="w").pack(side="left", fill="x", padx=10)
+          tk.Label(frame_current_day, text=formatted_time, bg=COLOR_BACKGROUND, fg=COLOR_FOREGROUND, anchor="center", width=WIDTH_TIME_LABEL).pack(side="left", padx=10)
+
+        tk.Label(frame_current_day, text=descriptions[str(current_date)], bg=COLOR_BACKGROUND, fg=COLOR_FOREGROUND, anchor="w").pack(side="left", fill="x")
 
 
   def open_change_daily_goal(self):

@@ -220,3 +220,5 @@ class Timer(tk.Frame):
         else:
           self.pause_timer = False
           self.id_timer = self.after(1000, self.update_timer)
+    else:
+      self.controller.destroy()
