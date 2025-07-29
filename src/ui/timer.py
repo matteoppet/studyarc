@@ -54,7 +54,7 @@ class Timer(tk.Frame):
     controls_frame.pack(side="left", padx=10, fill="x", expand=True)
     self.start_button = tk.Button(controls_frame, text="Start", width=15, command=lambda: self.start())
     self.start_button.pack(side="top", pady=(0,5), fill="x", expand=True)
-    tk.Button(controls_frame, text="Restart", width=15, command=lambda: self.reset()).pack(side="top", fill="x", expand=True)
+    tk.Button(controls_frame, text="Reset", width=15, command=lambda: self.reset()).pack(side="top", fill="x", expand=True)
 
     ttk.Separator(self, orient="horizontal").pack(fill="x", padx=10)
 
@@ -112,6 +112,11 @@ class Timer(tk.Frame):
       self.time_text.config(text=f"{self.timer_minutes_var:02d}:{self.timer_seconds_var:02d}")
     
   def reset(self):
+    if self.timer_going:
+      if messagebox.askyesno("Session not ended", "The timer is still running. Are you sure you want to reset?\n\nCurrent progress will be saved."):
+        count_minutes_session = self.time_minutes_var_selected.get() - self.timer_minutes_var
+        self.save(count_minutes_session*60)
+
     self.timer_minutes_var = abs(self.time_minutes_var_selected.get())
     self.timer_seconds_var = 0
     self.time_text.config(text=f"{self.timer_minutes_var:02d}:{self.timer_seconds_var:02d}")
@@ -213,12 +218,20 @@ class Timer(tk.Frame):
     if self.timer_going:
       if self.timer_minutes_var != 0 and self.timer_seconds_var != 0:
         self.pause_timer = True
-        if messagebox.askyesno("Session not ended", "The timer is still running. Are you sure you want to exit?\n\nCurrent progress will be saved."):
-          count_minutes_session = self.time_minutes_var_selected.get() - self.timer_minutes_var
-          self.save(count_minutes_session*60)
-          self.controller.destroy()
-        else:
-          self.pause_timer = False
-          self.id_timer = self.after(1000, self.update_timer)
+
+        match messagebox.askyesnocancel("Session not ended", "The timer is still running. Do you want to save the current progress?\n\n"):
+          case True:
+            count_minutes_session = self.time_minutes_var_selected.get() - self.timer_minutes_var
+            self.save(count_minutes_session*60)
+            self.controller.destroy()
+      
+          case None:
+            self.pause_timer = False
+            self.id_timer = self.after(1000, self.update_timer)
+
+          case default:
+            self.controller.destroy()
+
+
     else:
       self.controller.destroy()
