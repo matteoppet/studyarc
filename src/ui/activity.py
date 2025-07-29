@@ -139,9 +139,9 @@ class CurrentWeek(tk.Frame):
         tk.Label(frame_current_day, text=f"{list_days[count]} {str(current_date).split("-")[2]}:", bg=COLOR_BACKGROUND, fg=COLOR_FOREGROUND, anchor="e", width=WIDTH_DAYS_LABEL, font=("TkDefaultFont", 9, "bold")).pack(side="left")
         
         if total_time_in_seconds >= daily_session_goal_seconds:
-          tk.Label(frame_current_day, text=formatted_time, bg=COLOR_BACKGROUND, fg="green", anchor="center", width=WIDTH_TIME_LABEL).pack(side="left", padx=10)
+          tk.Label(frame_current_day, text=formatted_time, bg="lightgreen", fg="black", anchor="center", width=WIDTH_TIME_LABEL).pack(side="left", padx=10)
         else:
-          tk.Label(frame_current_day, text=formatted_time, bg=COLOR_BACKGROUND, fg=COLOR_FOREGROUND, anchor="center", width=WIDTH_TIME_LABEL).pack(side="left", padx=10)
+          tk.Label(frame_current_day, text=formatted_time, bg="lightgray", fg=COLOR_FOREGROUND, anchor="center", width=WIDTH_TIME_LABEL).pack(side="left", padx=10)
 
         tk.Label(frame_current_day, text=descriptions[str(current_date)], bg=COLOR_BACKGROUND, fg=COLOR_FOREGROUND, anchor="w").pack(side="left", fill="x")
 
