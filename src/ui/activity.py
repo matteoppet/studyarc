@@ -98,38 +98,38 @@ class CurrentWeek(tk.Frame):
     week_days_frame.pack(side="top", fill="x", padx=10, anchor="n")
 
     WIDTH_DAYS_LABEL = 13
-    self.cursor.execute("SELECT date, time FROM sessions WHERE date >= ? AND date <= ? AND user_id = ?", (monday, sunday, self.user_id))
-    rows = list(self.cursor.fetchall())
 
     with open(CONFIG_FILE, "r") as config_file_read:
       data = json.load(config_file_read)
     daily_session_goal_seconds = get_seconds_from_time(data["daily_session_goal"][0], data["daily_session_goal"][1], 0)
-
-    database_dates = [row[0] for row in rows]
-    current_week_dates = [monday + timedelta(days=count) for count in range(0,7)]
     
+    current_week_dates = [monday + timedelta(days=count) for count in range(0,7)]
     for count in range(0, 7):
       current_date = current_week_dates[count]
-    
-      if str(current_date) in database_dates: # check if a date in database already exists, if not creates an empty label
-        row = rows[database_dates.index(str(current_date))]
-        frame_current_day = tk.Frame(week_days_frame, bg=COLOR_BACKGROUND)
-        frame_current_day.pack(side="top", fill="x", pady=(0,5))
-        tk.Label(frame_current_day, text=f"{list_days[count]} {row[0].split("-")[2]}:", bg=COLOR_BACKGROUND, fg=COLOR_FOREGROUND, anchor="e", width=WIDTH_DAYS_LABEL, font=("TkDefaultFont", 9, "bold")).pack(side="left")
-        hours, minutes, seconds = get_time_from_seconds(row[1])
-        formatted_time = format_time(hours, minutes, seconds)
 
-        if int(row[1]) >= daily_session_goal_seconds:
-          tk.Label(frame_current_day, text=formatted_time, bg=COLOR_BACKGROUND, fg="green", anchor="w").pack(side="left", fill="x", padx=10)
-        else:
-          tk.Label(frame_current_day, text=formatted_time, bg=COLOR_BACKGROUND, fg=COLOR_FOREGROUND, anchor="w").pack(side="left", fill="x", padx=10)
+      self.cursor.execute("SELECT time FROM sessions WHERE date = ? AND user_id = ?", (current_date, self.user_id))
+      rows = self.cursor.fetchall()
 
-      else:
+      if rows == []:
         current_day = monday + timedelta(days=count)
         frame_current_day = tk.Frame(week_days_frame, bg=COLOR_BACKGROUND)
         frame_current_day.pack(side="top", fill="x", pady=(0,5))
         tk.Label(frame_current_day, text=f"{list_days[count]} {str(current_day).split("-")[2]}:", bg=COLOR_BACKGROUND, fg=COLOR_FOREGROUND, anchor="e", width=WIDTH_DAYS_LABEL, font=("TkDefaultFont", 9, "bold")).pack(side="left")
         tk.Label(frame_current_day, text="No data", bg=COLOR_BACKGROUND, fg=COLOR_FOREGROUND, anchor="w").pack(side="left", fill="x", padx=10)
+
+      else:
+        total_time_in_seconds = sum([row[0] for row in rows])
+        hours, minutes, seconds = get_time_from_seconds(total_time_in_seconds)
+        formatted_time = format_time(hours, minutes, seconds)
+
+        frame_current_day = tk.Frame(week_days_frame, bg=COLOR_BACKGROUND)
+        frame_current_day.pack(side="top", fill="x", pady=(0,5))
+        tk.Label(frame_current_day, text=f"{list_days[count]} {str(current_date).split("-")[2]}:", bg=COLOR_BACKGROUND, fg=COLOR_FOREGROUND, anchor="e", width=WIDTH_DAYS_LABEL, font=("TkDefaultFont", 9, "bold")).pack(side="left")
+        
+        if total_time_in_seconds >= daily_session_goal_seconds:
+          tk.Label(frame_current_day, text=formatted_time, bg=COLOR_BACKGROUND, fg="green", anchor="w").pack(side="left", fill="x", padx=10)
+        else:
+          tk.Label(frame_current_day, text=formatted_time, bg=COLOR_BACKGROUND, fg=COLOR_FOREGROUND, anchor="w").pack(side="left", fill="x", padx=10)
 
 
   def open_change_daily_goal(self):

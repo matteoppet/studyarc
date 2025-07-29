@@ -177,16 +177,9 @@ class Timer(tk.Frame):
       elif working_on_category_selected.lower() == "projects":
         self.cursor.execute("UPDATE projects SET time = time + ? WHERE user_id = ? AND id = ?", (total_seconds_time_studied, self.user_id, int(working_on_selected.split(". ")[0])))
         self.conn.commit()
-
-    self.cursor.execute("SELECT id FROM sessions WHERE date = ? AND user_id = ?", (today_date, self.user_id))
-    rows = self.cursor.fetchall()
-
-    if len(rows) == 0:
-      self.cursor.execute("INSERT INTO sessions (date, time, description, user_id) VALUES (?, ?, ?, ?)", (today_date, total_seconds_time_studied, working_on_selected, self.user_id))
-      self.conn.commit()
-    else:
-      self.cursor.execute("UPDATE sessions SET time = time + ? WHERE date = ? AND user_id = ?", (total_seconds_time_studied, today_date, self.user_id))
-      self.conn.commit()
+        
+    self.cursor.execute("INSERT INTO sessions (date, time, description, user_id) VALUES (?, ?, ?, ?)", (today_date, total_seconds_time_studied, working_on_selected, self.user_id))
+    self.conn.commit()
 
   def add_task(self):
     name_new_task = self.name_new_task_stringvar.get()

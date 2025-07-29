@@ -132,7 +132,6 @@ class ProjectOVerview(tk.Toplevel):
   def run_logs(self, frame):
     tk.Label(frame, text="Logs", font=("TkDefaultFont", 13, "bold"), anchor="w").pack(side="top", fill="x", pady=10, padx=10)
 
-    print(self.data_project[1])
     self.cursor.execute("SELECT date, time FROM sessions WHERE user_id = ? AND description = ?", (self.user_id, f"{self.data_project[0]}. {self.data_project[1]}"))
     sessions = self.cursor.fetchall()
 
