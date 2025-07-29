@@ -7,7 +7,7 @@ from ui.activity import CurrentWeek
 
 from core.database import Database
 from core.settings import COLOR_BACKGROUND_SIDEPANEL
-from utils.utils import resource_path
+from utils.utils import resource_path, LogOldSession
 
 class StudyArc(tk.Tk):
   def __init__(self):
@@ -39,6 +39,11 @@ class StudyArc(tk.Tk):
 
     self.timer_frame = Timer(frame_left, self, self.cursor, self.conn, self.user_id)
     self.current_week_activity = CurrentWeek(frame_left, self.cursor, self.conn, self.user_id)
+    ttk.Separator(frame_left, orient="horizontal").pack(side="top", fill="x", padx=25, pady=(30,20))
+    
+    frame_buttons = tk.Frame(frame_left, bg=COLOR_BACKGROUND_SIDEPANEL)
+    frame_buttons.pack(side="top", fill="x", padx=25, pady=(0,20))
+    tk.Button(frame_buttons, text="Log session", command=lambda: LogOldSession(self, self.cursor, self.conn, self.user_id)).pack(side="left")
 
     frame_right = tk.Frame(frame_timer_projects)
     frame_right.pack(side="left", fill="both", expand=True)
@@ -50,6 +55,3 @@ class StudyArc(tk.Tk):
 if __name__ == "__main__":
   app = StudyArc()
   app.run()
-
-
-# to run: cd automations -> npm run release -> git push --follow-tags

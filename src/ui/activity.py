@@ -72,7 +72,7 @@ class CurrentWeek(tk.Frame):
   def __init__(self, root, cursor, conn, user_id):
     tk.Frame.__init__(self, root)
     self.config(bg=COLOR_BACKGROUND, borderwidth=1, relief="solid")
-    self.pack(side="top", fill="both", anchor="n", padx=25, pady=30, expand=True)
+    self.pack(side="top", fill="both", anchor="n", padx=25, pady=(30,0), expand=True)
 
     self.cursor = cursor
     self.conn = conn

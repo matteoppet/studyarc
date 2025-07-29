@@ -6,6 +6,7 @@ src/utils/__pycache__
 build
 dist
 __pycache__
-main.spec
 /frontend/*
+!/frontend/package.json
+!/frontend/package-lock.json
 !/frontend/CHANGELOG.md

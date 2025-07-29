@@ -22,7 +22,7 @@ class ProjectOVerview(tk.Toplevel):
     self.cursor.execute("SELECT * FROM projects WHERE id = ? AND user_id = ?", (self.id_project, self.user_id))
     self.data_project = self.cursor.fetchall()[0]
 
-    self.title = self.data_project[1]
+    self.title(str(self.data_project[1]))
     self.geometry(f"600x500+{self.winfo_pointerx()}+{self.winfo_pointery()}")
     try:
       self.iconbitmap("../assets/icon.ico")
@@ -34,7 +34,7 @@ class ProjectOVerview(tk.Toplevel):
 
     self.new_task_name = tk.StringVar()
     self.status_edit = tk.StringVar(value=self.data_project[2])
-    self.title_edit = tk.StringVar(value=self.title)
+    self.title_edit = tk.StringVar(value=self.data_project[1])
 
     self.edit_var = False
 
@@ -132,7 +132,7 @@ class ProjectOVerview(tk.Toplevel):
   def run_logs(self, frame):
     tk.Label(frame, text="Logs", font=("TkDefaultFont", 13, "bold"), anchor="w").pack(side="top", fill="x", pady=10, padx=10)
 
-    self.cursor.execute("SELECT date, time FROM sessions WHERE user_id = ? AND description = ?", (self.user_id, self.title))
+    self.cursor.execute("SELECT date, time FROM sessions WHERE user_id = ? AND description = ?", (self.user_id, self.data_project[1]))
     sessions = self.cursor.fetchall()
 
     if len(sessions) == 0:
@@ -146,7 +146,7 @@ class ProjectOVerview(tk.Toplevel):
       treeview_logs.column("Time", anchor="center")
       treeview_logs.column("#0", anchor="center")
 
-      self.cursor.execute("SELECT date, time FROM sessions WHERE user_id = ? AND description = ?", (self.user_id, self.title))
+      self.cursor.execute("SELECT date, time FROM sessions WHERE user_id = ? AND description = ?", (self.user_id, self.data_project[1]))
       for row in self.cursor.fetchall():
         treeview_logs.insert("", 0, text=row[0], values=[row[1]])
 
