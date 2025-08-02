@@ -1,5 +1,5 @@
 {
-  "version": "1.0.5",
+  "version": "1.1.0",
   "devDependencies": {
     "standard-version": "^9.5.0"
   },
@@ -7,6 +7,6 @@
     "version": "standard-version",
     "patch-changelog": "node patch-changelog.js",
     "build:exe": "pyinstaller --clean ../main.spec",
-    "release": "npm run version && npm run patch-changelog && git add CHANGELOG.md && git commit -m \"chore: patch changelog\" && git push && git push --tags && npm run build:exe && node release-to-github.js"
+    "release": "npm run version && npm run patch-changelog && node update-version-files.js && git add CHANGELOG.md && git commit -m \"chore: patch changelog\" && git push && git push --tags && npm run build:exe && node release-to-github.js"
   }
 }

@@ -8,6 +8,7 @@ from ui.activity import CurrentWeek
 from core.database import Database
 from core.settings import COLOR_BACKGROUND_SIDEPANEL
 from utils.utils import resource_path, LogOldSession, export_logs_to_csv
+from core.__init__ import check_for_update
 
 class StudyArc(tk.Tk):
   def __init__(self):
@@ -56,4 +57,5 @@ class StudyArc(tk.Tk):
 
 if __name__ == "__main__":
   app = StudyArc()
+  check_for_update(app)
   app.run()

@@ -10,3 +10,4 @@ __pycache__
 !/frontend/package.json
 !/frontend/package-lock.json
 !/frontend/CHANGELOG.md
+!/frontend/latest_version.txt
