@@ -231,7 +231,7 @@ class Projects(tk.Frame):
   def __init__(self, root, cursor, conn, user_id):
     tk.Frame.__init__(self, root)
     self.config(bg=COLOR_BACKGROUND)
-    self.pack(side="left", pady=(5, 28), anchor="nw", padx=(35, 25), fill="both", expand=True)
+    self.pack(side="top", pady=(5, 28), anchor="nw", fill="both", expand=True)
 
     self.cursor = cursor
     self.conn = conn
@@ -283,16 +283,13 @@ class Projects(tk.Frame):
     self.treeview_subjects.heading("Time", text="Time Studied")
     self.treeview_subjects.column("Time", anchor="center")
 
-    # init listbox with created subjects
-    with open(CONFIG_FILE, "r") as read_config_file:
-      data = json.load(read_config_file)
-    
-    count = 0
-    for subject, time in data["subjects"].items():
-      hours, minutes, seconds = get_time_from_seconds(int(time))
+    self.cursor.execute("SELECT id, name, time FROM subjects WHERE user_id = ?", (self.user_id,))
+    rows = self.cursor.fetchall()
+
+    for row in rows:
+      hours, minutes, seconds = get_time_from_seconds(row[2])
       formatted_time = format_time(hours, minutes, seconds)
-      self.treeview_subjects.insert("", tk.END, iid=count, text=subject, values=[formatted_time])
-      count += 1
+      self.treeview_subjects.insert("", tk.END, iid=row[0], text=row[1], values=[formatted_time])
 
     controls_frame = tk.Frame(frame)
     controls_frame.pack(side="left", fill="both", padx=10)
@@ -393,37 +390,26 @@ class Projects(tk.Frame):
   def add_subject(self):
     new_subject_name = self.new_subject_name.get()
 
-    with open(CONFIG_FILE, "r") as read_config_file:
-      data = json.load(read_config_file)
+    self.cursor.execute("SELECT name FROM subjects WHERE user_id = ?", (self.user_id,))
+    if new_subject_name in self.cursor.fetchall():
+      messagebox.showerror("Add Subject Error", "This subject already exists.")
+    else:
+      self.cursor.execute("INSERT INTO subjects (name, time, user_id) VALUES (?, ?, ?)", (new_subject_name, 0, self.user_id,))
+      self.conn.commit()
 
-    for name_subject in data["subjects"].keys():
-      if name_subject.lower() == new_subject_name.lower():
-        messagebox.showerror("Error adding subject", "This subject already exists.")
-        return
-
-    data["subjects"][new_subject_name] = 0
-
-    with open(CONFIG_FILE, "w") as updated_config_file:
-      updated_config_file.write(json.dumps(data, indent=4))
-
-    self.treeview_subjects.insert("", 0, iid=len(data["subjects"].keys())-1, text=new_subject_name, values=[f"{0}h {0}m {0}s"])
-    self.new_subject_name.set(value="")
+      new_id = self.cursor.lastrowid
+      time_str = format_time(0, 0, 0)
+      self.treeview_subjects.insert("", 0, iid=new_id, text=new_subject_name, values=[time_str])
+      self.new_subject_name.set(value="")
 
   def delete_subject(self):
     selected_item = self.treeview_subjects.selection()
     if selected_item:
-
-      with open(CONFIG_FILE, "r") as read_config_file:
-        data = json.load(read_config_file)
-
-      key_item_to_delete = list(data["subjects"].keys())[int(selected_item[0])]
-
-      if messagebox.askokcancel("Delete Confirmation", f"Are you sure to delete this subject?\n\n-> {key_item_to_delete}\n\nThis action is not reversible."):
-        del data["subjects"][key_item_to_delete]
-
-        with open(CONFIG_FILE, "w") as updated_config_file:
-          updated_config_file.write(json.dumps(data, indent=4))
-
+      id_selected_item = selected_item[0]
+      
+      if messagebox.askokcancel("Delete Confirmation", f"Are you sure to delete this subject?\n\nThis action is not reversible."):
+        self.cursor.execute("DELETE FROM subjects WHERE id = ? AND user_id = ?", (id_selected_item, self.user_id,))
+        self.conn.commit()
         self.treeview_subjects.delete(selected_item[0])
 
   def move_subject(self, direction):
