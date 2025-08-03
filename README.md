@@ -29,9 +29,9 @@ Files created:
 
 ## 🛠 Planned Features
 
-- Export logs to CSV
 - Dark mode and theme options
 - Data backup & restore
+- RPG-like with rewards system
 
 ## Reporting Issues
 
