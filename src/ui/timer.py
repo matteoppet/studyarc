@@ -1,237 +1,170 @@
+import customtkinter as ctk
 import tkinter as tk
 from tkinter import ttk
-from tkinter import messagebox
 
-from core.settings import COLOR_BACKGROUND, COLOR_FOREGROUND
-from core.__init__ import CONFIG_FILE
-from utils.utils import get_seconds_from_time
-
-from datetime import date
+from datetime import timedelta, date
 import json
 
-class Timer(tk.Frame):
+from core.settings import COLOR_BACKGROUND
+from utils.utils import get_time_from_seconds, format_time
+from core.__init__ import CONFIG_FILE
+
+
+class Timer(ctk.CTkFrame):
   def __init__(self, root, controller, cursor, conn, user_id):
-    tk.Frame.__init__(self, root)
+    ctk.CTkFrame.__init__(self, root)
     self.root = root
     self.controller = controller
     self.cursor = cursor
     self.conn = conn
     self.user_id = user_id
 
-    self.controller.protocol("WM_DELETE_WINDOW", lambda: self.check_timer())
-
-    self.config(bg=COLOR_BACKGROUND, borderwidth=1, relief="solid")
     self.pack(side="top", anchor="nw", padx=25, pady=5, expand=True, fill="both")
-    
-    self.timer_minutes_var = 25
-    self.timer_seconds_var = 0 
-    self.time_minutes_var_selected = tk.IntVar(value=25)
 
-    self.working_on_category_selected = tk.StringVar()
-    self.working_on_selected = tk.StringVar()
+    self.category_selected = tk.StringVar(value="Custom")
+    self.description = tk.StringVar()
+    self.categories_available = ["Custom", "Projects", "Subjects"]
 
-    self.name_new_task_stringvar = tk.StringVar()
-    self.num_tasks = 0
-    self.tasks = []
-
+    self.font_size_timer_label = 45
+    self.timer_started = False
     self.pause_timer = False
-    self.timer_going = False
+    self.timer_minutes = 25
+    self.timer_seconds = 0
+
+    self.tasks = {}
 
     self.run()
 
   def run(self):
-    tk.Label(self, text="Timer", font=("TkDefaultFont", 20, "bold"), anchor="w", bg=COLOR_BACKGROUND, fg=COLOR_FOREGROUND).pack(side="top", fill="x", pady=(5,0), padx=5)
+    for widgets in self.winfo_children():
+      widgets.destroy()
 
-    timer_controls_frame = tk.Frame(self, bg=COLOR_BACKGROUND)
-    timer_controls_frame.pack(side="top", anchor="nw", fill="x")
+    ctk.CTkLabel(self, text="Timer", font=("TkDefaultFont", 24, "bold"), anchor="w").pack(side="top", fill="x", pady=10, padx=10)
 
-    time_text_frame = tk.Frame(timer_controls_frame, bg=COLOR_BACKGROUND)
-    time_text_frame.pack(side="left")
-    self.time_text = tk.Label(time_text_frame, text=f"{self.timer_minutes_var:02d}:{self.timer_seconds_var:02d}", font=("TkDefaultFont", 35, "bold"), bg=COLOR_BACKGROUND, fg=COLOR_FOREGROUND)
-    self.time_text.pack(side="top", anchor="n", pady=20, padx=30)
+    ttk.Separator(self, orient="horizontal").pack(side="top", fill="x", pady=(0,10))
 
-    controls_frame = tk.Frame(timer_controls_frame, bg=COLOR_BACKGROUND)
-    controls_frame.pack(side="left", padx=10, fill="x", expand=True)
-    self.start_button = tk.Button(controls_frame, text="Start", width=15, command=lambda: self.start())
-    self.start_button.pack(side="top", pady=(0,5), fill="x", expand=True)
-    tk.Button(controls_frame, text="Reset", width=15, command=lambda: self.reset()).pack(side="top", fill="x", expand=True)
+    frame_content = ctk.CTkFrame(self)
+    frame_content.pack(side="top")
 
-    ttk.Separator(self, orient="horizontal").pack(fill="x", padx=10)
+    frame_timer_label = ctk.CTkFrame(frame_content, fg_color="transparent")
+    frame_timer_label.pack(side="top", anchor="center", pady=10, fill="x")
+    self.timer_label = ctk.CTkLabel(frame_timer_label, text=f"{self.timer_minutes:02d}:{self.timer_seconds:02d}", font=("TKDefaultFOnt", self.font_size_timer_label, "bold"))
+    self.timer_label.pack(side="top", anchor="center", pady=20, padx=20)
 
-    settings_timer = tk.Frame(controls_frame, bg=COLOR_BACKGROUND)
-    settings_timer.pack(side="top", anchor="nw", fill="x", expand=True)
-    tk.Label(settings_timer, text="Custom time (minutes)", bg=COLOR_BACKGROUND, fg=COLOR_FOREGROUND, anchor="w").pack(side="top", fill="x", pady=(10,0))
-    custom_timer_entry_button_frame = tk.Frame(settings_timer, bg=COLOR_BACKGROUND)
-    custom_timer_entry_button_frame.pack(side="top", fill="x", expand=True, pady=(0,5))
-    tk.Entry(custom_timer_entry_button_frame, textvariable=self.time_minutes_var_selected).pack(side="left", fill="x", expand=True, padx=(0,10))
-    tk.Button(custom_timer_entry_button_frame, text="Set", width=6, command=lambda: self.set_custom_time()).pack(side="right")
+    frame_buttons = ctk.CTkFrame(frame_timer_label, fg_color="transparent")
+    frame_buttons.pack(side="top", pady=(0,20))
+    if self.timer_started:
+      self.stop_timer_button = ctk.CTkButton(frame_buttons, text="Stop", command=lambda: self.stop_timer())
+      self.stop_timer_button.pack(side="left", padx=(0,5))
+      self.reset_timer_button = ctk.CTkButton(frame_buttons, text="Reset", command=lambda: self.reset_timer())
+      self.reset_timer_button.pack(side="left")
+    else:
+      self.start_timer_button = ctk.CTkButton(frame_buttons, text="Start", command=lambda: self.start_timer())
+      self.start_timer_button.pack(side="left")
 
-    tk.Label(controls_frame, text="Working on", anchor="w").pack(side="top", fill="x")
-    frame_comboboxes = tk.Frame(controls_frame)
-    frame_comboboxes.pack(side="top", fill="x", pady=(0,10))
+    self.bind("<Configure>", self.resize_timer_font)
 
-    combobox_category = ttk.Combobox(frame_comboboxes, values=["Subjects", "Projects"], textvariable=self.working_on_category_selected)
-    combobox_category.pack(side="left", fill="x", padx=(0,10))
-    combobox_category.bind("<<ComboboxSelected>>", lambda x: self.changed_working_on_category())
-    with open(CONFIG_FILE, "r") as read_config_file:
-      data = json.load(read_config_file)
-    self.combobox_values = ttk.Combobox(frame_comboboxes, values=list(data["subjects"].keys()), textvariable=self.working_on_selected)
-    self.combobox_values.pack(side="left", fill="x")
-
-    self.run_tasks()
-  
-  def run_tasks(self):
-    if hasattr(self, 'frame_tasks'):
-      self.frame_tasks.destroy()
-
-    self.frame_tasks = tk.Frame(self)
-    self.frame_tasks.pack(side="top", fill="both", expand=False, pady=10, padx=10)
+    frame_description = ctk.CTkFrame(frame_content, fg_color="transparent")
+    frame_description.pack(side="top", fill="both")
+    ctk.CTkLabel(frame_description, text="Insert a Description:").pack(side="top")
+    self.frame_comboboxes_description = ctk.CTkFrame(frame_description, fg_color="transparent")
+    self.frame_comboboxes_description.pack(side="top", fill="x", padx=10, pady=(5,10))
+    self.category_combobox = ctk.CTkComboBox(self.frame_comboboxes_description, variable=self.category_selected, values=self.categories_available, command=lambda x: self.run_description_field(self.category_selected.get()), width=150)
+    self.category_combobox.pack(side="left", padx=(0,10))
     
-    frame_title_and_info = tk.Frame(self.frame_tasks)
-    frame_title_and_info.pack(side="top", fill="x", pady=(5,10))
-    tk.Label(frame_title_and_info, text="Quick Tasks", font=("TkDefaultFont", 13, "bold"), fg=COLOR_FOREGROUND, bg=COLOR_BACKGROUND, anchor="w").pack(side="left", fill="x")
-    tk.Label(frame_title_and_info, text="*Double click to mark task completed", fg=COLOR_FOREGROUND, bg=COLOR_BACKGROUND, anchor="e").pack(side="right", fill="x")
+    # TODO: FIX THIS
 
-    frame_add_task = tk.Frame(self.frame_tasks)
-    frame_add_task.pack(side="top", anchor="n", fill="x", pady=(0,5))
-    tk.Entry(frame_add_task, textvariable=self.name_new_task_stringvar).pack(side="left", anchor="n", fill="x", expand=True, pady=(3,0))
-    tk.Button(frame_add_task, text="Add", command=lambda: self.add_task()).pack(side="left", padx=(10,0))
+    if self.category_selected.get() == "Custom":
+      ctk.CTkEntry(self.frame_comboboxes_description, textvariable=self.description).pack(side="right")
 
-    if self.num_tasks == 0:
-      tk.Label(self.frame_tasks, text="No tasks added", fg=COLOR_FOREGROUND, bg=COLOR_BACKGROUND).pack(expand=True, pady=(30,0))
+    elif self.category_selected.get() == "Projects":
+      self.cursor.execute("SELECT name FROM projects WHERE user_id = ?", (self.user_id,))
+      rows = [row[0] for row in self.cursor.fetchall()]
+      ctk.CTkComboBox(self.frame_comboboxes_description, variable=self.description, values=rows).pack(side="right")
+
+    elif self.category_selected.get() == "Subjects":
+      self.cursor.execute("SELECT name FROM projects WHERE user_id = ?", (self.user_id,))
+      rows = [row[0] for row in self.cursor.fetchall()]
+      ctk.CTkComboBox(self.frame_comboboxes_description, variable=self.description, values=rows).pack(side="right")
+
+    frame_title = ctk.CTkFrame(self, fg_color="transparent")
+    frame_title.pack(fill="x", padx=10, pady=(20,10))
+    ctk.CTkLabel(frame_title, text="Tasks", font=("TkDefaultFont", 20, "bold")).pack(side="left")
+    ctk.CTkButton(frame_title, text="Add", command=lambda: self.add_task()).pack(side="right")
+
+    ttk.Separator(self, orient="horizontal").pack(side="top", fill="x", pady=(0,10))
+
+    frame_tasks = ctk.CTkScrollableFrame(self, fg_color="transparent")
+    frame_tasks.pack(side="top", fill="both", expand=True)
+    if len(self.tasks.items()) == 0:
+      ctk.CTkLabel(frame_tasks, text="No Tasks").pack(side="top", anchor="center", pady=10)
     else:
-      self.listbox_tasks = tk.Listbox(self)
-      self.listbox_tasks.pack(side="top", fill="both", expand=True, padx=10, anchor="n")
-      self.listbox_tasks.bind("<Double-1>", lambda x: self.complete_task())
+      for id, name in self.tasks.items():
+        current_task_frame = ctk.CTkFrame(frame_tasks, fg_color="gray")
+        current_task_frame.pack(side="top", fill="x", padx=10, pady=5)
+        
+        ctk.CTkLabel(current_task_frame, text=f"{id}:", width=25).pack(side="left")
+        ctk.CTkLabel(current_task_frame, text=name).pack(side="left")
+        ctk.CTkButton(current_task_frame, text="Complete", width=15, command=lambda x=id: self.delete_task(x)).pack(side="right", padx=5, pady=5)
 
-  def set_custom_time(self):
-    if self.time_minutes_var_selected.get() > 60:
-      messagebox.showerror("Custom Time Error", "Custom time invalid, it can't be over 60 minutes.")
-    else:
-      self.timer_minutes_var = abs(self.time_minutes_var_selected.get())
-      self.time_text.config(text=f"{self.timer_minutes_var:02d}:{self.timer_seconds_var:02d}")
-    
-  def reset(self):
-    if self.timer_going:
-      if messagebox.askyesno("Session not ended", "The timer is still running. Are you sure you want to reset?\n\nCurrent progress will be saved."):
-        count_minutes_session = self.time_minutes_var_selected.get() - self.timer_minutes_var
-        self.save(count_minutes_session*60)
-
-    self.timer_minutes_var = abs(self.time_minutes_var_selected.get())
-    self.timer_seconds_var = 0
-    self.time_text.config(text=f"{self.timer_minutes_var:02d}:{self.timer_seconds_var:02d}")
-  
-  def start(self):
-    if self.start_button["text"].lower() == "start":
-
-      self.pause_timer = False
-      self.id_timer = self.after(1000, self.update_timer)
-
-      self.timer_going = True
-
-      self.start_button.config(text="Pause")
-    elif self.start_button["text"].lower() == "pause":
-
-      self.pause_timer = True
-      self.id_timer = self.after(1000, self.update_timer)
-
-      self.start_button.config(text="Start")
-
-  def update_timer(self):
-    if not self.pause_timer:
-      if (self.timer_minutes_var > 0 or self.timer_seconds_var > 0):
-        total_seconds = self.timer_minutes_var * 60 + self.timer_seconds_var - 1
-        self.timer_minutes_var, self.timer_seconds_var = divmod(total_seconds, 60)
-        self.time_text.config(text=f"{self.timer_minutes_var:02d}:{self.timer_seconds_var:02d}")
-        self.id_timer = self.after(1000, self.update_timer)
-
-      else:
-        self.timer_going = False
-        self.save(self.time_minutes_var_selected.get()*60)
-        messagebox.showinfo("Study Session Ended", "Study session completed. Take a break before the next session.")
-        self.after_cancel(self.id_timer)
-        self.id_timer = None
-        self.reset()
-        self.controller.run()
-
-  def changed_working_on_category(self):
-    category = self.working_on_category_selected.get()
-
-    if category.lower() == "subjects":
-      with open(CONFIG_FILE, "r") as read_config_file:
-        data = json.load(read_config_file)
-      self.combobox_values["values"] = list(data["subjects"].keys())
-      self.working_on_selected.set(value="")
-    else:
-      self.cursor.execute("SELECT id, name FROM projects WHERE user_id = ?", (self.user_id,))
-      rows = self.cursor.fetchall()
-
-      self.combobox_values["values"] = [f"{row[0]}. {row[1]}" for row in rows]
-      self.working_on_selected.set(value="")
-
-  def save(self, time_studied_seconds):
-    total_seconds_time_studied = time_studied_seconds
-    working_on_category_selected = self.working_on_category_selected.get()
-    working_on_selected = self.working_on_selected.get()
-    today_date = date.today()
-
-    if working_on_category_selected != "" and working_on_selected != "":
-      if working_on_category_selected.lower() == "subjects":
-        with open(CONFIG_FILE, "r") as read_config_file:
-          data = json.load(read_config_file)
-
-        data["subjects"][working_on_selected] += total_seconds_time_studied
-
-        with open(CONFIG_FILE, "w") as updated_config_file:
-          updated_config_file.write(json.dumps(data, indent=4))
-      elif working_on_category_selected.lower() == "projects":
-        self.cursor.execute("UPDATE projects SET time = time + ? WHERE user_id = ? AND id = ?", (total_seconds_time_studied, self.user_id, int(working_on_selected.split(". ")[0])))
-        self.conn.commit()
-
-    self.cursor.execute("INSERT INTO sessions (date, time, description, user_id) VALUES (?, ?, ?, ?)", (today_date, total_seconds_time_studied, working_on_selected, self.user_id))
-    self.conn.commit()
+  def resize_timer_font(self, event):
+    self.font_size_timer_label = int(event.width / 10)
+    self.timer_label.configure(font=("TKDefaultFont", self.font_size_timer_label, "bold"))
 
   def add_task(self):
-    name_new_task = self.name_new_task_stringvar.get()
+    dialog = ctk.CTkInputDialog(text="Insert new task:", title="New Task")
+    text = dialog.get_input()
 
-    if (name_new_task != "" or len(name_new_task) != 0):
-      self.num_tasks += 1
+    if text:
+      highest_id = 0 if len(self.tasks.keys()) == 0 else max(self.tasks.keys())
+      self.tasks[highest_id+1] = text
+      self.run()
 
-      if self.num_tasks == 1:
-        self.run_tasks()
+  def delete_task(self, id):
+    del self.tasks[id]
+    self.run()
 
-      self.tasks.append(name_new_task.lower())
-      self.listbox_tasks.insert(tk.END, f"{self.num_tasks-1}. {name_new_task.capitalize()}")
-      self.name_new_task_stringvar.set("")
-    else:
-      messagebox.showerror("Empty task", "Tasks cannot be empty.")
+  def start_timer(self):
+    if not self.pause_timer:
+      if self.timer_minutes == 0 and self.timer_seconds == 0:
+        total_seconds = self.timer_minutes * 60 + self.timer_seconds - 1
+        self.timer_minutes, self.timer_seconds = divmod(total_seconds, 60)
+        self.timer_label.configure(text=f"{self.timer_minutes:02d}:{self.timer_seconds:02d}")
+        self.id_timer = self.after(1000, self.start_timer)
 
-  def complete_task(self):
-    selected_index = self.listbox_tasks.curselection()
-    if selected_index:
-        selected_item = self.listbox_tasks.get(selected_index[0])
-        id, name = selected_item.split(". ")
-        del self.tasks[int(id)]
-        self.listbox_tasks.delete(int(id))
+        if not self.timer_started:
+          self.timer_started = True
+          self.run()
+      else:
+        self.save()
+        self.reset_timer()
 
-  def check_timer(self):
-    if self.timer_going:
-      if self.timer_minutes_var != 0 and self.timer_seconds_var != 0:
-        self.pause_timer = True
+  def stop_timer(self):
+    self.pause_timer = not self.pause_timer
 
-        match messagebox.askyesnocancel("Session not ended", "The timer is still running. Do you want to save the current progress?\n\n"):
-          case True:
-            count_minutes_session = self.time_minutes_var_selected.get() - self.timer_minutes_var
-            self.save(count_minutes_session*60)
-            self.controller.destroy()
-      
-          case None:
-            self.pause_timer = False
-            self.id_timer = self.after(1000, self.update_timer)
+    self.stop_timer_button.configure(text="Continue" if self.pause_timer else "Stop")
 
-          case default:
-            self.controller.destroy()
+    self.after_cancel(self.id_timer)
+    self.id_timer = self.after(1000, self.start_timer)
+  
+  def reset_timer(self):
+    self.after_cancel(self.id_timer)
+    self.timer_minutes = 25
+    self.timer_seconds = 0
+    self.timer_started = False
+    self.run()
 
+  def save(self):
+    time_in_seconds = self.timer_minutes * 60 + self.timer_seconds
+    category = self.category_selected.get()
+    description = self.description.get()
+    today = date.today()
 
-    else:
-      self.controller.destroy()
+    self.cursor.execute("INSERT INTO sessions (date, time, description, user_id) VALUES (?, ?, ?, ?)", (today, time_in_seconds, description, self.user_id))
+
+    if category.lower() == "projects":
+      self.cursor.execute("UPDATE projects SET time = time + ? WHERE user_id = ? AND name = ?", (time_in_seconds, self.user_id, description))
+    elif category.lower() == "subjects":
+      self.cursor.execute("UPDATE subjects SET time = time + ? WHERE user_id = ? AND name = ?", (time_in_seconds, self.user_id, description))
+
+    self.conn.commit()

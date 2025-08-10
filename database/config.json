@@ -1,9 +1,9 @@
 {
     "subjects": {
-        "Math": 8585,
-        "Physics": 34316,
-        "Arduino": 4356,
-        "Biology": 4056
+
+    },
+    "streaks": {
+        "current_streak": 0
     },
     "project_folders": {
         "Python": true,

@@ -173,7 +173,7 @@ def get_seconds_from_time(hours: int, minutes: int, seconds: int) -> int:
   return hours * 3600 + minutes * 60 + seconds
 
 def format_time(hours: int, minutes: int, seconds: int) -> str:
-  return f"{hours}h {minutes}m {seconds}s"
+  return f"{hours}:{minutes:02d}:{seconds:02d}"
 
 def resource_path(relative_path: str) -> str:
     import sys
