@@ -31,6 +31,7 @@ class StudyArc(ctk.CTk):
       self.iconbitmap(resource_path("assets/icon.ico"))
 
     self.user_id = None
+    self.user_id = None
 
   def run(self):
     for widgets in self.winfo_children():
