@@ -1,16 +1,32 @@
 {
-    "subjects": {
-
+  "themes": {
+    "1": "light",
+    "2": "dark",
+    "3": "light"
+  },
+  "streaks": {
+    "1": {
+      "current_streak": 0
     },
-    "streaks": {
-        "current_streak": 0
+    "2": {
+      "current_streak": 0
     },
-    "project_folders": {
-        "Python": true,
-        "NASA": true
-    },
-    "daily_session_goal": [
-        0,
-        30
+    "3": {
+      "current_streak": 0
+    }
+  },
+  "daily_session_goal": {
+    "1": [
+      0,
+      45
+    ],
+    "2": [
+      0,
+      45
+    ],
+    "3": [
+      0,
+      45
     ]
+  }
 }

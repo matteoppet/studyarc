@@ -51,8 +51,6 @@ class Database:
                         (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         name TEXT,
-                        status TEXT,
-                        description TEXT,
                         project_id INTEGER NOT NULL,
                         user_id INTEGER NOT NULL,
                         FOREIGN KEY(project_id) REFERENCES projects(id) on DELETE CASCADE

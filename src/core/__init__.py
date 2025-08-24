@@ -6,14 +6,9 @@ import urllib
 from core.version import CURRENT_VERSION
 
 DEFAULT_CONFIG = {
-  "subjects": {
-    "Math": 0,
-    "Physics": 0
-  },
-  "project_folders": {},
-  "daily_session_goal": [
-    0,45
-  ]
+  "themes": {},
+  "streaks": {},
+  "daily_session_goal": {}
 }
 
 if getattr(sys, "frozen", False): # from compiled exe
@@ -50,5 +45,15 @@ def check_for_update(root_window):
                f"A new version ({latest}) is available.\n\nDownload latest version through:\n\nhttps://sourceforge.net/projects/studyarc/"):
       root_window.deiconify()
 
+def update_base_config_file(new_user_id):
+  with open(CONFIG_FILE, "r") as config_read:
+    data = json.load(config_read)
+
+  data["streaks"][new_user_id] = {"current_streak": 0}
+  data["daily_session_goal"][new_user_id] = [0,45]
+  data["themes"][new_user_id] = "light"
+
+  with open(CONFIG_FILE, "w") as config_write:
+    config_write.write(json.dumps(data, indent=2))
 
 create_config_file()

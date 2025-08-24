@@ -6,9 +6,9 @@ import json
 from tkinter import messagebox
 from tkinter import filedialog
 
-from core.settings import COLOR_BACKGROUND, COLOR_FOREGROUND
 from core.__init__ import CONFIG_FILE
 
+# TODO: convert this
 class LogOldSession(tk.Toplevel):
   def __init__(self, root, cursor, conn, user_id):
     super().__init__(root)

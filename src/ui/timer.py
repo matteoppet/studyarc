@@ -2,13 +2,7 @@ import customtkinter as ctk
 import tkinter as tk
 from tkinter import ttk
 
-from datetime import timedelta, date
-import json
-
-from core.settings import COLOR_BACKGROUND
-from utils.utils import get_time_from_seconds, format_time
-from core.__init__ import CONFIG_FILE
-
+from datetime import date
 
 class Timer(ctk.CTkFrame):
   def __init__(self, root, controller, cursor, conn, user_id):
@@ -69,10 +63,8 @@ class Timer(ctk.CTkFrame):
     ctk.CTkLabel(frame_description, text="Insert a Description:").pack(side="top")
     self.frame_comboboxes_description = ctk.CTkFrame(frame_description, fg_color="transparent")
     self.frame_comboboxes_description.pack(side="top", fill="x", padx=10, pady=(5,10))
-    self.category_combobox = ctk.CTkComboBox(self.frame_comboboxes_description, variable=self.category_selected, values=self.categories_available, command=lambda x: self.run_description_field(self.category_selected.get()), width=150)
+    self.category_combobox = ctk.CTkComboBox(self.frame_comboboxes_description, variable=self.category_selected, values=self.categories_available, command=lambda x: self.run(), width=150)
     self.category_combobox.pack(side="left", padx=(0,10))
-    
-    # TODO: FIX THIS
 
     if self.category_selected.get() == "Custom":
       ctk.CTkEntry(self.frame_comboboxes_description, textvariable=self.description).pack(side="right")
@@ -81,11 +73,13 @@ class Timer(ctk.CTkFrame):
       self.cursor.execute("SELECT name FROM projects WHERE user_id = ?", (self.user_id,))
       rows = [row[0] for row in self.cursor.fetchall()]
       ctk.CTkComboBox(self.frame_comboboxes_description, variable=self.description, values=rows).pack(side="right")
+      self.description.set("")
 
     elif self.category_selected.get() == "Subjects":
-      self.cursor.execute("SELECT name FROM projects WHERE user_id = ?", (self.user_id,))
+      self.cursor.execute("SELECT name FROM subjects WHERE user_id = ?", (self.user_id,))
       rows = [row[0] for row in self.cursor.fetchall()]
       ctk.CTkComboBox(self.frame_comboboxes_description, variable=self.description, values=rows).pack(side="right")
+      self.description.set("")
 
     frame_title = ctk.CTkFrame(self, fg_color="transparent")
     frame_title.pack(fill="x", padx=10, pady=(20,10))

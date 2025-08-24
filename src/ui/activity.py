@@ -11,7 +11,7 @@ from core.__init__ import CONFIG_FILE
 class CurrentWeek(ctk.CTkFrame):
   def __init__(self, root, cursor, conn, user_id):
     ctk.CTkFrame.__init__(self, root)
-    self.pack(side="top", fill="both", anchor="n", padx=25, pady=(30,0))
+    self.pack(side="top", fill="both", anchor="n", padx=25, pady=(30,15))
 
     self.cursor = cursor
     self.conn = conn
@@ -46,24 +46,24 @@ class CurrentWeek(ctk.CTkFrame):
     with open(CONFIG_FILE, "r") as config_file:
       data = json.load(config_file)
 
-    goal_hours, goal_minutes = data["daily_session_goal"]
+    goal_hours, goal_minutes = data["daily_session_goal"][str(self.user_id)]
     formatted_today_progress_string = f"{today_hours}:{today_minutes:02d}/{goal_hours}:{goal_minutes:02d}"
 
     ctk.CTkLabel(activity_frame, text=f"⏰ Today's progress: {formatted_today_progress_string}").pack(side="left")
-    ctk.CTkLabel(activity_frame, text=f"⚡ Current Streak: {data['streaks']['current_streak']}").pack(side="right")
+    ctk.CTkLabel(activity_frame, text=f"⚡ Current Streak: {data['streaks'][str(self.user_id)]['current_streak']}").pack(side="right")
 
-    treeview_week = ttk.Treeview(self, columns=("Time", "Description"), height=7)
-    treeview_week.pack(side="top", fill="both", padx=10, pady=10)
+    self.treeview_week = ttk.Treeview(self, columns=("Time", "Description"), height=7)
+    self.treeview_week.pack(side="top", fill="both", padx=10, pady=10)
 
-    treeview_week.heading("#0", text="Day")
-    treeview_week.heading("Time", text="Time")
-    treeview_week.heading("Description", text="Description")
+    self.treeview_week.heading("#0", text="Day")
+    self.treeview_week.heading("Time", text="Time")
+    self.treeview_week.heading("Description", text="Description")
 
-    treeview_week.column("#0", stretch=True)
-    treeview_week.column("Time", stretch=True, anchor="center")
-    treeview_week.column("Description", stretch=True)
+    self.treeview_week.column("#0", stretch=True)
+    self.treeview_week.column("Time", stretch=True, anchor="center")
+    self.treeview_week.column("Description", stretch=True)
 
-    goal_time_in_seconds = get_seconds_from_time(data["daily_session_goal"][0], data["daily_session_goal"][1], 0)
+    goal_time_in_seconds = get_seconds_from_time(data["daily_session_goal"][str(self.user_id)][0], data["daily_session_goal"][str(self.user_id)][1], 0)
     name_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
     for count in range(0, 7):
       current_date = MONDAY + timedelta(days=count)
@@ -93,12 +93,61 @@ class CurrentWeek(ctk.CTkFrame):
       if TODAY == current_date:
         tags.append("current_day")
 
-      treeview_week.insert(
+      self.treeview_week.insert(
         "", tk.END,
         text=current_day_formatted,
         values=[current_day_time_formatted, descriptions],
         tags=tags
       )
 
-    treeview_week.tag_configure("goal_reached", background="lightgreen")
-    treeview_week.tag_configure("current_day", foreground="blue")
+    self.treeview_week.tag_configure("goal_reached", background="lightgreen")
+    self.treeview_week.tag_configure("current_day", foreground="blue")
+
+    self._set_appearance_mode(ctk.get_appearance_mode())
+
+  def _set_appearance_mode(self, mode_string):
+    super()._set_appearance_mode(mode_string)
+    
+    style = ttk.Style()
+    style.theme_use("clam")
+
+    if mode_string.lower() == "dark":
+      style.configure(
+        "Dark.Treeview",
+        background="#1e1e1e",
+        foreground="white",
+        rowheight=25,
+        relief="flat"
+      )
+
+      style.map ("Dark.Treeview",
+                 background=[("selected", "#0078d4")],
+                 foreground=[("selected", "white")]
+      )
+      
+      style.configure("Dark.Treeview.Heading",
+            background="#2d2d2d",
+            foreground="white",
+      )
+
+      style.configure("TSeparator", background="#2b2b2b")
+      self.treeview_week.config(style="Dark.Treeview")
+
+    elif mode_string.lower() == "light":
+      style.configure("Light.Treeview",
+          background="white",
+          foreground="black",
+          rowheight=25,
+      )
+
+      style.map("Light.Treeview",
+          background=[("selected", "#cce7ff")],
+          foreground=[("selected", "black")]
+      )
+
+      style.configure("Light.Treeview.Heading",
+          background="#f0f0f0",
+          foreground="black",
+      )
+
+      self.treeview_week.config(style="Light.Treeview")

@@ -1,3 +1,0 @@
-COLOR_BACKGROUND = "SystemButtonFace"
-COLOR_FOREGROUND = "black"
-COLOR_BACKGROUND_SIDEPANEL = "lightgray"
