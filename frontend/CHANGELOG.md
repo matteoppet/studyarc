@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.3.0](https://github.com/matteoppet/Study-Tracker/compare/v1.1.0...v1.3.0) (2025-08-24)
+
+
+### Features
+
+* multiple users functionality and profile widget ([e5807cd](https://github.com/matteoppet/Study-Tracker/commit/e5807cd6a5fab6c2a7a8c9025b3ddb4b39c316bf))
+
 ## [1.2.0](https://github.com/matteoppet/Study-Tracker/compare/v1.0.5...v1.2.0) (2025-08-24)
 
 
