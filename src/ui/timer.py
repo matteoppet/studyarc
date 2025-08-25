@@ -16,7 +16,6 @@ class Timer(ctk.CTkFrame):
     self.pack(side="top", anchor="nw", padx=25, pady=5, expand=True, fill="both")
 
     self.category_selected = tk.StringVar(value="Custom")
-    self.description = tk.StringVar()
     self.categories_available = ["Custom", "Projects", "Subjects"]
 
     self.font_size_timer_label = 45
@@ -32,6 +31,7 @@ class Timer(ctk.CTkFrame):
   def run(self):
     for widgets in self.winfo_children():
       widgets.destroy()
+    self.description = tk.StringVar()
 
     ctk.CTkLabel(self, text="Timer", font=("TkDefaultFont", 24, "bold"), anchor="w").pack(side="top", fill="x", pady=10, padx=10)
 
@@ -120,7 +120,7 @@ class Timer(ctk.CTkFrame):
 
   def start_timer(self):
     if not self.pause_timer:
-      if self.timer_minutes == 0 and self.timer_seconds == 0:
+      if self.timer_minutes != 0 or self.timer_seconds != 0:
         total_seconds = self.timer_minutes * 60 + self.timer_seconds - 1
         self.timer_minutes, self.timer_seconds = divmod(total_seconds, 60)
         self.timer_label.configure(text=f"{self.timer_minutes:02d}:{self.timer_seconds:02d}")
@@ -142,11 +142,14 @@ class Timer(ctk.CTkFrame):
     self.id_timer = self.after(1000, self.start_timer)
   
   def reset_timer(self):
-    self.after_cancel(self.id_timer)
-    self.timer_minutes = 25
-    self.timer_seconds = 0
-    self.timer_started = False
-    self.run()
+    try:
+      self.after_cancel(self.id_timer)
+      self.timer_minutes = 25
+      self.timer_seconds = 0
+      self.timer_started = False
+      self.run()
+    except AttributeError:
+      pass
 
   def save(self):
     time_in_seconds = self.timer_minutes * 60 + self.timer_seconds
