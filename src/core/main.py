@@ -61,7 +61,7 @@ class StudyArc(ctk.CTk):
       frame_right = ctk.CTkFrame(frame_timer_projects, fg_color="transparent")
       frame_right.pack(side="left", fill="both", expand=True)
 
-      self.profile_frame = Profile(frame_right, self.user_id, self.cursor, self.conn)
+      self.profile_frame = Profile(frame_right, self, self.user_id, self.cursor, self.conn)
       self.projects_frame = Projects(frame_right, self.cursor, self.conn, self.user_id, self.profile_frame)
 
     self.mainloop()

@@ -1,5 +1,4 @@
 import customtkinter as ctk
-import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 
@@ -56,12 +55,13 @@ class LogIn(ctk.CTkFrame):
     username_dialog = ctk.CTkInputDialog(title="New User", text="Enter username")
     username = username_dialog.get_input()
 
-    self.cursor.execute("INSERT INTO users (name, exp, level) VALUES (?, ?, ?)", (username, 0, 1))
-    self.conn.commit()
+    if username:
+      self.cursor.execute("INSERT INTO users (name, exp, level) VALUES (?, ?, ?)", (username, 0, 1))
+      self.conn.commit()
 
-    update_base_config_file(self.cursor.lastrowid)
+      update_base_config_file(self.cursor.lastrowid)
 
-    self.run()
+      self.run()
 
   def select(self, user_id):
     self.root.user_id = user_id
@@ -69,10 +69,11 @@ class LogIn(ctk.CTkFrame):
 
 
 class Profile(ctk.CTkFrame):
-  def __init__(self, root, user_id, cursor, conn):
+  def __init__(self, root, controller, user_id, cursor, conn):
     ctk.CTkFrame.__init__(self, root)
     self.root = root
     self.user_id = user_id
+    self.controller = controller
     self.cursor = cursor
     self.conn = conn
 

@@ -1,4 +1,3 @@
-from pydoc import text
 from tkinter import messagebox
 import customtkinter as ctk
 import tkinter as tk

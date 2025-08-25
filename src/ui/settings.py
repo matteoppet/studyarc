@@ -66,6 +66,11 @@ class Settings(ctk.CTkToplevel):
     ctk.CTkButton(username_frame, text="Set", width=50, command=lambda: self.set_new_username()).pack(side="right", padx=(7,0))
     ctk.CTkEntry(username_frame, textvariable=self.username).pack(side="right")
 
+    delete_user_frame = ctk.CTkFrame(frame)
+    delete_user_frame.pack(side="top", fill="x", padx=10, pady=(5,5))
+    ctk.CTkLabel(delete_user_frame, text="Delete user").pack(side="left")
+    ctk.CTkButton(delete_user_frame, text="Delete", width=80, fg_color="red", text_color="white", command=lambda: self.delete_user()).pack(side="right")
+
     ######## ACTIVITY
     ctk.CTkLabel(frame, text="Activity", font=("TkDefaultFont", 20, "bold")).pack(side="top", anchor="w", padx=10, pady=(10,0))
     ttk.Separator(frame, orient="horizontal").pack(side="top", fill="x", padx=10, pady=5)
@@ -155,6 +160,14 @@ class Settings(ctk.CTkToplevel):
 
     with open(CONFIG_FILE, "w") as config_write:
       config_write.write(json.dumps(data, indent=2))
+
+  def delete_user(self):
+    if messagebox.askyesno("Confirm Delete", "Are you sure you want to delete this user?"):
+      self.cursor.execute("DELETE FROM users WHERE id = ?", (self.user_id,))
+      self.conn.commit()
+
+      self.root.controller.user_id = None
+      self.root.controller.run()
 
   def load_info(self):
     self.cursor.execute("SELECT name FROM users WHERE id = ?", (self.user_id,))

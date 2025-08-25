@@ -2,7 +2,8 @@
   "themes": {
     "1": "light",
     "2": "dark",
-    "3": "light"
+    "3": "light",
+    "4": "light"
   },
   "streaks": {
     "1": {
@@ -12,6 +13,9 @@
       "current_streak": 0
     },
     "3": {
+      "current_streak": 0
+    },
+    "4": {
       "current_streak": 0
     }
   },
@@ -25,6 +29,10 @@
       45
     ],
     "3": [
+      0,
+      45
+    ],
+    "4": [
       0,
       45
     ]
